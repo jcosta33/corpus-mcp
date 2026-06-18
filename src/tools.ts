@@ -7,7 +7,7 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 import { type SwarmEnv, invoke_swarm } from './swarm/invoke.ts';
-import { confine_path, is_safe_segment, task_stem } from './roots.ts';
+import { confine_path, is_safe_segment, is_safe_base, task_stem } from './roots.ts';
 import { respond, tool_error, ENVELOPE_OUTPUT_SHAPE } from './envelope.ts';
 
 export type Ctx = Readonly<{ env: SwarmEnv; root: string }>;
@@ -78,7 +78,13 @@ export function register_tools(server: McpServer, ctx: Ctx): void {
                 if (!is_safe_segment(stem)) {
                     return tool_error(`invalid task id/stem: ${task}`);
                 }
-                const baseArg = typeof base === 'string' && is_safe_segment(base) ? base : undefined;
+                // A base ref legitimately contains `/`/`~` (origin/main, HEAD~1) — validate it as a base,
+                // and REJECT an invalid one rather than silently dropping it (which would diff against the
+                // wrong base with no error the agent could detect).
+                if (typeof base === 'string' && !is_safe_base(base)) {
+                    return tool_error(`invalid --base value: ${base}`);
+                }
+                const baseArg = typeof base === 'string' ? base : undefined;
                 return respond(invoke_swarm(ctx.env, 'review', [stem], { base: baseArg }), 'review');
             }
         );

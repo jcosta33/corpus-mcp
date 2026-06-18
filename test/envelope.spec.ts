@@ -48,6 +48,42 @@ describe('build_envelope', () => {
         expect(attention.some((a) => a.includes('AC-004') && a.includes('Unverified'))).toBe(true); // empty-evidence Pass
     });
 
+    it('derives an item for EVERY fact branch (verifyBinding, scopeDivergence, self-report, packet structural)', () => {
+        const full = {
+            level: 'warning',
+            task: 'feat',
+            diffChangedFiles: ['a.ts'],
+            coverage: [{ id: 'AC-001', kind: 'orphan', message: 'orphan row AC-001' }],
+            verifyBinding: [{ id: 'AC-001', kind: 'mismatch', message: 'verify cmd does not match' }],
+            scopeDivergence: ['SPEC-x not in this task'],
+            selfReport: { claimedNotInDiff: ['claimed.ts'], inDiffNotClaimed: ['extra.ts'], outsideScope: ['oos.ts'] },
+            emptyEvidencePassRows: ['AC-002'],
+            packetStructural: {
+                badResultCells: ['AC-003'],
+                badStatus: 'bogus',
+                statusPassContradicted: true,
+                missingSections: ['Human attention'],
+            },
+            hasReviewPacket: true,
+        };
+        const att = build_envelope(okResult(full), 'review').derived?.humanAttention ?? [];
+        for (const expected of [
+            'orphan row AC-001',
+            'verify cmd does not match',
+            'SPEC-x not in this task',
+            'claimed.ts',
+            'extra.ts',
+            'oos.ts',
+            'AC-002',
+            'AC-003',
+            'bogus',
+            'status: pass',
+            'Human attention',
+        ]) {
+            expect(att.some((a) => a.includes(expected)), `missing derived item for "${expected}"`).toBe(true);
+        }
+    });
+
     it('surfaces a structured CLI error (no worktree) as ok:false with a note, not a throw', () => {
         const env = build_envelope(
             { kind: 'structured-error', invocation: { command: 'swarm review x --json', exitCode: 2 }, error: { error: 'Usage', message: 'no worktree found for x' } },
@@ -57,6 +93,19 @@ describe('build_envelope', () => {
         expect(env.noVerdictIssued).toBe(true);
         expect(env.note).toMatch(/no live run|worktree/i);
         expect(env.data).toEqual({ error: 'Usage', message: 'no worktree found for x' });
+    });
+
+    it('does NOT mislabel a non-no-worktree review error as a no-worktree case', () => {
+        const env = build_envelope(
+            {
+                kind: 'structured-error',
+                invocation: { command: 'swarm review x --json', exitCode: 2 },
+                error: { error: 'NoWorkspace', message: 'cannot run x: no tasks/x.md in this workspace' },
+            },
+            'review'
+        );
+        expect(env.ok).toBe(false);
+        expect(env.note).toBe('cannot run x: no tasks/x.md in this workspace'); // the real message, not the worktree hint
     });
 });
 

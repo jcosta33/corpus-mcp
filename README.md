@@ -54,4 +54,5 @@ pnpm typecheck && pnpm lint && pnpm test:run && pnpm build
 
 Status: **v0, slice 1** — the read/reconcile tools that ride the CLI's existing `--json`. Built as a
 sibling of swarm-cli; deviates from the canon sketch (which imagined importing the core library) by
-shelling out over the `--json` contract instead — see the ADR in the swarm workspace.
+shelling out over the `--json` contract instead — recorded in
+[swarm ADR-0085](https://github.com/jcosta33/swarm/blob/main/docs/adrs/0085-swarm-mcp-adapts-the-json-contract.md).

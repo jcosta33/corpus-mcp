@@ -8,8 +8,8 @@ import { z } from 'zod';
 
 // --- swarm status --json  → DerivedBoard ----------------------------------------------------------
 const BoardTask = z
-    .object({ id: z.string(), status: z.string(), hasReview: z.boolean(), reviewStatus: z.string().optional() })
-    .passthrough();
+    .object({ id: z.string(), status: z.string(), hasReview: z.boolean(), reviewStatus: z.string().nullable() })
+    .passthrough(); // reviewStatus is `string | null` (deriveBoard.ts) — null for an unreviewed task
 const BoardSpec = z.object({ id: z.string(), status: z.string(), tasks: z.array(BoardTask) }).passthrough();
 export const DerivedBoardSchema = z.object({ level: z.string(), specs: z.array(BoardSpec) }).passthrough();
 export type DerivedBoard = z.infer<typeof DerivedBoardSchema>;
@@ -59,7 +59,9 @@ export const ReviewReportSchema = z
         task: z.string(),
         diffChangedFiles: z.array(z.string()),
         coverage: z.array(CoverageFinding),
-        verifyBinding: z.array(z.record(z.string(), z.unknown())),
+        // VerifyBindingReport is `{id, kind, message}` (reconcileReview.ts) — model the consumed fields
+        // so a rename/drop fails the tripwire (the adapter derives human-attention from `.message`).
+        verifyBinding: z.array(z.object({ id: z.string(), kind: z.string(), message: z.string() }).passthrough()),
         scopeDivergence: z.array(z.string()),
         selfReport: SelfReport,
         emptyEvidencePassRows: z.array(z.string()),

@@ -16,12 +16,14 @@ export function parse_config(argv: readonly string[], env: NodeJS.ProcessEnv, cw
     let root = env.SWARM_WORKSPACE ?? cwd;
     let bin = env.SWARM_BIN ?? 'swarm';
     for (let i = 0; i < argv.length; i += 1) {
+        // Treat a flag-shaped next token as a missing value (don't consume `--swarm-bin` as the workspace).
         const next = argv[i + 1];
-        if (argv[i] === '--workspace' && next !== undefined) {
-            root = next;
+        const value = next !== undefined && !next.startsWith('--') ? next : undefined;
+        if (argv[i] === '--workspace' && value !== undefined) {
+            root = value;
             i += 1;
-        } else if (argv[i] === '--swarm-bin' && next !== undefined) {
-            bin = next;
+        } else if (argv[i] === '--swarm-bin' && value !== undefined) {
+            bin = value;
             i += 1;
         }
     }

@@ -5,7 +5,7 @@
 // write flag. This keeps swarm-cli at its 2-dep footprint and couples the two repos only through the
 // public, tested JSON interface ("many libraries, not a framework").
 
-import { spawnSync } from 'node:child_process';
+import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
 
 export type SwarmEnv = Readonly<{
     bin: string; // the `swarm` binary (env SWARM_BIN, else 'swarm' on PATH)
@@ -56,8 +56,19 @@ export function invoke_swarm(
     const command = `swarm ${args.join(' ')}`;
 
     // A bounded timeout so a hung `swarm` cannot hang the tool call forever (the read/reconcile commands
-    // are local and fast; a timeout surfaces as result.error → a launch-error below).
-    const result = spawnSync(env.bin, args, { cwd: env.cwd, encoding: 'utf8', timeout: 30_000 });
+    // are local and fast; a timeout surfaces as result.error → a launch-error below). The try/catch is
+    // defense-in-depth: spawnSync THROWS synchronously on some malformed args (e.g. a NUL byte), which the
+    // input guards already reject — but a throw must still become a clean launch-error, never escape.
+    let result: SpawnSyncReturns<string>;
+    try {
+        result = spawnSync(env.bin, args, { cwd: env.cwd, encoding: 'utf8', timeout: 30_000 });
+    } catch (caught: unknown) {
+        return {
+            kind: 'launch-error',
+            invocation: { command, exitCode: 1 },
+            message: `could not run \`${command}\`: ${caught instanceof Error ? caught.message : String(caught)}`,
+        };
+    }
     if (result.error) {
         return {
             kind: 'launch-error',

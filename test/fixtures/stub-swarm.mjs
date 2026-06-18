@@ -3,10 +3,17 @@
 // STUB_LOG (so tests can assert which subprocesses ran / that no write flag was ever passed) and emits
 // fixture JSON to stdout keyed off the verb — mirroring the real CLI's --json shapes.
 import { appendFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const argv = process.argv.slice(2);
 if (process.env.STUB_LOG) {
     appendFileSync(process.env.STUB_LOG, JSON.stringify(argv) + '\n');
+}
+// Make the no-write test non-circular: if a write/mutation flag is EVER passed, drop a marker into the
+// workspace (cwd). The test then asserts the marker never appears — a real failure if the adapter leaks
+// a write flag, not a tautology about a non-writing stub.
+if (argv.some((a) => a === '--write' || a === '--force' || a === '--agent')) {
+    appendFileSync(join(process.cwd(), 'WRITE-FLAG-SEEN'), '1');
 }
 const emit = (obj) => process.stdout.write(JSON.stringify(obj));
 const verb = argv[0];

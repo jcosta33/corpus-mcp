@@ -199,6 +199,8 @@ describe('swarm-mcp server', () => {
                 await client.callTool(call);
             }
             expect(snapshot(root)).toBe(before); // the workspace is byte-identical after a full tool sweep
+            // non-circular: the stub drops WRITE-FLAG-SEEN iff it ever receives a write flag — it didn't.
+            expect(existsSync(join(root, 'WRITE-FLAG-SEEN'))).toBe(false);
             // and no invocation ever carried a mutation flag
             const flags = invocations().flat();
             for (const forbidden of ['--write', '--force', '--agent']) {
@@ -206,6 +208,69 @@ describe('swarm-mcp server', () => {
             }
             // every invocation appended `--json` (the only flag the adapter adds)
             expect(invocations().every((argv) => argv.includes('--json'))).toBe(true);
+        } finally {
+            await close();
+        }
+    });
+
+    it('passes a valid --base (with a slash) to the CLI and rejects a flag-shaped base (AC/INV-004)', async () => {
+        const { client, close } = await connectClient();
+        try {
+            // A valid base ref containing `/` reaches the CLI as `--base origin/main` (not silently dropped).
+            await client.callTool({ name: 'swarm_scan_task', arguments: { task: 'feat', base: 'origin/main' } });
+            const reviewCall = invocations().find((a) => a[0] === 'review');
+            expect(reviewCall).toBeDefined();
+            expect(reviewCall).toContain('--base');
+            expect(reviewCall).toContain('origin/main');
+
+            // A flag-shaped base is rejected (isError) — never reaches the subprocess as a flag.
+            const r = (await client.callTool({
+                name: 'swarm_scan_task',
+                arguments: { task: 'feat', base: '--force' },
+            })) as { isError?: boolean };
+            expect(r.isError).toBe(true);
+            expect(invocations().flat()).not.toContain('--force');
+        } finally {
+            await close();
+        }
+    });
+
+    it('no tool adds a verdict key anywhere in its OWN authored content (recursive, INV-002)', async () => {
+        const collectKeys = (obj: unknown, skip: string, acc: string[] = []): string[] => {
+            if (Array.isArray(obj)) {
+                for (const v of obj) collectKeys(v, skip, acc);
+            } else if (obj && typeof obj === 'object') {
+                for (const [k, v] of Object.entries(obj)) {
+                    acc.push(k);
+                    if (k !== skip) collectKeys(v, skip, acc); // `data` is the CLI's verbatim output — exempt
+                }
+            }
+            return acc;
+        };
+        const { client, close } = await connectClient();
+        try {
+            for (const call of ALL_TOOL_CALLS) {
+                const sc = ((await client.callTool(call)) as { structuredContent?: Record<string, unknown> })
+                    .structuredContent;
+                const keys = collectKeys(sc, 'data');
+                for (const forbidden of FORBIDDEN_VERDICT_KEYS) {
+                    expect(keys, `${call.name} adds no nested "${forbidden}"`).not.toContain(forbidden);
+                }
+            }
+        } finally {
+            await close();
+        }
+    });
+
+    it('validate_review_packet surfaces the CLI check diagnostics through the envelope', async () => {
+        const { client, close } = await connectClient();
+        try {
+            const r = (await client.callTool({
+                name: 'swarm_validate_review_packet',
+                arguments: { review: 'specs/a/spec.md' },
+            })) as { structuredContent: { ok: boolean; data: { diagnostics: { code: string }[] } } };
+            expect(r.structuredContent.ok).toBe(true);
+            expect(r.structuredContent.data.diagnostics.map((d) => d.code)).toContain('C004');
         } finally {
             await close();
         }

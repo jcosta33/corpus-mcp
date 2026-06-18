@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, mkdirSync, writeFileSync, symlinkSync, realpathSyn
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { confine_path, is_safe_segment, task_stem } from '../src/roots.ts';
+import { confine_path, is_safe_segment, is_safe_base, task_stem } from '../src/roots.ts';
 
 let root: string;
 beforeEach(() => {
@@ -48,6 +48,35 @@ describe('confine_path', () => {
         } finally {
             rmSync(outside, { recursive: true, force: true });
         }
+    });
+
+    it('rejects a symlinked PARENT dir even when the leaf does not exist yet', () => {
+        const outside = realpathSync(mkdtempSync(join(tmpdir(), 'swarm-mcp-outside-')));
+        symlinkSync(outside, join(root, 'evildir')); // a dir symlink pointing outside root
+        try {
+            expect(confine_path(root, 'evildir/not-yet-created.md')).toBeNull();
+        } finally {
+            rmSync(outside, { recursive: true, force: true });
+        }
+    });
+
+    it('rejects a path containing a control character (NUL)', () => {
+        expect(confine_path(root, `specs/a${String.fromCharCode(0)}/x.md`)).toBeNull();
+    });
+});
+
+describe('is_safe_base', () => {
+    it('accepts a real git ref (with `/`, `~`)', () => {
+        expect(is_safe_base('main')).toBe(true);
+        expect(is_safe_base('origin/main')).toBe(true);
+        expect(is_safe_base('HEAD~1')).toBe(true);
+    });
+    it('rejects flag-shaped, empty, and whitespace/control bases', () => {
+        expect(is_safe_base('--force')).toBe(false);
+        expect(is_safe_base('-x')).toBe(false);
+        expect(is_safe_base('')).toBe(false);
+        expect(is_safe_base('a b')).toBe(false);
+        expect(is_safe_base(`a${String.fromCharCode(0)}b`)).toBe(false);
     });
 });
 

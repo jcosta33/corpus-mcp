@@ -42,4 +42,18 @@ describe('contract schemas parse the real --json shapes (drift tripwire)', () =>
     it('the structured error body parses', () => {
         expect(SwarmErrorSchema.safeParse({ error: 'Usage', message: 'no worktree found' }).success).toBe(true);
     });
+
+    it('a board task with reviewStatus:null parses (the unreviewed-task case the old schema rejected)', () => {
+        const board = {
+            level: 'clean',
+            specs: [{ id: 'S', status: 'ready', tasks: [{ id: 'T', status: 'ready', hasReview: false, reviewStatus: null }] }],
+        };
+        expect(DerivedBoardSchema.safeParse(board).success).toBe(true);
+    });
+
+    it('the tripwire FAILS if a consumed field is renamed/dropped (verifyBinding.message)', () => {
+        const drifted = JSON.parse(readFileSync(join(here, 'fixtures', 'review-report.json'), 'utf8'));
+        drifted.verifyBinding = [{ id: 'AC-001', kind: 'x' /* message dropped */ }];
+        expect(ReviewReportSchema.safeParse(drifted).success).toBe(false);
+    });
 });

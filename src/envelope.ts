@@ -97,16 +97,17 @@ export function build_envelope(
     };
 
     if (result.kind === 'structured-error') {
-        // A structured CLI error (e.g. "no worktree found …") is a FACT for the agent, not an adapter
-        // failure: the run simply isn't reviewable from here yet.
+        // A structured CLI error is a FACT for the agent, not an adapter failure. Only the no-worktree
+        // case gets the "launch the run first" hint — every other cause (task not found, source spec
+        // unresolvable, parse failure, diff failure) must surface its OWN message, never be mislabelled.
+        const isNoWorktree = kind === 'review' && /no worktree/i.test(result.error.message);
         return {
             ...base,
             ok: false,
             data: result.error,
-            note:
-                kind === 'review'
-                    ? 'The task has no live run to reconcile here (e.g. no worktree). Launch the run first, then retry.'
-                    : result.error.message,
+            note: isNoWorktree
+                ? 'The task has no live run to reconcile here (no worktree). Launch the run first, then retry.'
+                : result.error.message,
         };
     }
 
