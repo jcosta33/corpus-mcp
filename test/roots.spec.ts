@@ -34,6 +34,11 @@ describe('confine_path', () => {
         expect(confine_path(root, '.')).toBeNull();
     });
 
+    it('rejects a flag-shaped path (leading `-`, which the CLI would parse as an option)', () => {
+        expect(confine_path(root, '-rf.md')).toBeNull();
+        expect(confine_path(root, '--output')).toBeNull();
+    });
+
     it('rejects a symlink that escapes the root', () => {
         const outside = realpathSync(mkdtempSync(join(tmpdir(), 'swarm-mcp-outside-')));
         writeFileSync(join(outside, 'secret.md'), 'x');
@@ -56,6 +61,10 @@ describe('is_safe_segment', () => {
         expect(is_safe_segment('.')).toBe(false);
         expect(is_safe_segment('a b')).toBe(false);
         expect(is_safe_segment('')).toBe(false);
+    });
+    it('rejects a flag-shaped stem (leading `-`)', () => {
+        expect(is_safe_segment('--help')).toBe(false);
+        expect(is_safe_segment('-base')).toBe(false);
     });
 });
 

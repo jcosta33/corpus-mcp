@@ -1,13 +1,22 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { build_envelope, respond, tool_error } from '../src/envelope.ts';
 import type { SwarmResult } from '../src/swarm/invoke.ts';
 
-const here = dirname(fileURLToPath(import.meta.url));
-const reviewData = JSON.parse(readFileSync(join(here, 'fixtures', 'review-report.json'), 'utf8'));
+// A CONTROLLED ReviewReport for the derive-logic test (deterministic, independent of any captured
+// fixture — the captured-output drift tripwire lives in contract.spec.ts).
+const reviewData = {
+    level: 'warning',
+    task: 'feat',
+    diffChangedFiles: ['src/a.ts', 'package-lock.json'],
+    coverage: [{ id: 'AC-002', kind: 'uncovered', message: 'requirement AC-002 is in scope but has no coverage row' }],
+    verifyBinding: [],
+    scopeDivergence: [],
+    selfReport: { claimedNotInDiff: [], inDiffNotClaimed: ['package-lock.json'], outsideScope: ['package-lock.json'] },
+    emptyEvidencePassRows: ['AC-004'],
+    packetStructural: { badResultCells: [], badStatus: null, statusPassContradicted: false, missingSections: [] },
+    hasReviewPacket: true,
+};
 
 const okResult = (data: unknown): SwarmResult => ({
     kind: 'ok',

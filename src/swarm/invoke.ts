@@ -55,7 +55,9 @@ export function invoke_swarm(
     args.push('--json');
     const command = `swarm ${args.join(' ')}`;
 
-    const result = spawnSync(env.bin, args, { cwd: env.cwd, encoding: 'utf8' });
+    // A bounded timeout so a hung `swarm` cannot hang the tool call forever (the read/reconcile commands
+    // are local and fast; a timeout surfaces as result.error → a launch-error below).
+    const result = spawnSync(env.bin, args, { cwd: env.cwd, encoding: 'utf8', timeout: 30_000 });
     if (result.error) {
         return {
             kind: 'launch-error',
