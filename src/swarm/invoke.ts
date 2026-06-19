@@ -56,12 +56,19 @@ export function invoke_swarm(
     const command = `swarm ${args.join(' ')}`;
 
     // A bounded timeout so a hung `swarm` cannot hang the tool call forever (the read/reconcile commands
-    // are local and fast; a timeout surfaces as result.error → a launch-error below). The try/catch is
-    // defense-in-depth: spawnSync THROWS synchronously on some malformed args (e.g. a NUL byte), which the
-    // input guards already reject — but a throw must still become a clean launch-error, never escape.
+    // are local and fast; a timeout surfaces as result.error → a launch-error below). `maxBuffer` is raised
+    // well above Node's 1 MB default: a large workspace's `status` / `review --json` can exceed 1 MB, and
+    // the default truncates it to an unparseable blob that then masquerades as a launch error (swarm-hq #22).
+    // The try/catch is defense-in-depth: spawnSync THROWS synchronously on some malformed args (e.g. a NUL
+    // byte), which the input guards already reject — but a throw must still become a clean launch-error.
     let result: SpawnSyncReturns<string>;
     try {
-        result = spawnSync(env.bin, args, { cwd: env.cwd, encoding: 'utf8', timeout: 30_000 });
+        result = spawnSync(env.bin, args, {
+            cwd: env.cwd,
+            encoding: 'utf8',
+            timeout: 30_000,
+            maxBuffer: 64 * 1024 * 1024,
+        });
     } catch (caught: unknown) {
         return {
             kind: 'launch-error',

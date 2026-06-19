@@ -50,6 +50,22 @@ async function connect(bin: string = stubBin): Promise<{ client: Client; close: 
 
 const firstText = (r: { contents: { text?: string }[] }): string => r.contents[0]?.text ?? '';
 
+// Symmetric to the tool sweep (server.spec INV-002): no resource body may carry a swarm-mcp-AUTHORED
+// verdict key. Resources serve the CLI's data verbatim (only `workspace` wraps it, adding
+// noVerdictIssued) — none routes the `swarm check` verdict field — so no forbidden key should appear.
+const FORBIDDEN_VERDICT_KEYS = ['verdict', 'pass', 'fail', 'merge', 'decision', 'approved', 'mergeAllowed'];
+function collect_keys(obj: unknown, acc: string[] = []): string[] {
+    if (Array.isArray(obj)) {
+        for (const v of obj) collect_keys(v, acc);
+    } else if (obj !== null && typeof obj === 'object') {
+        for (const [k, v] of Object.entries(obj)) {
+            acc.push(k);
+            collect_keys(v, acc);
+        }
+    }
+    return acc;
+}
+
 describe('swarm-mcp resources', () => {
     it('lists fixed resources + templated resources', async () => {
         const { client, close } = await connect();
@@ -58,6 +74,36 @@ describe('swarm-mcp resources', () => {
             expect(fixed).toEqual(['swarm://checks', 'swarm://status', 'swarm://workspace']);
             const templates = (await client.listResourceTemplates()).resourceTemplates.map((r) => r.uriTemplate).sort();
             expect(templates).toEqual(['swarm://findings/{id}', 'swarm://reviews/{id}', 'swarm://specs/{id}', 'swarm://tasks/{id}']);
+        } finally {
+            await close();
+        }
+    });
+
+    it('no resource body carries a swarm-mcp-authored verdict key (INV-002, symmetric to the tool sweep)', async () => {
+        const { client, close } = await connect();
+        try {
+            const uris = [
+                'swarm://workspace',
+                'swarm://status',
+                'swarm://checks',
+                'swarm://tasks/feat',
+                'swarm://specs/SPEC-feat',
+                'swarm://reviews/feat',
+                'swarm://findings/lesson',
+            ];
+            for (const uri of uris) {
+                const text = firstText(await client.readResource({ uri }));
+                let parsed: unknown;
+                try {
+                    parsed = JSON.parse(text);
+                } catch {
+                    continue; // findings are raw markdown, not JSON — no authored object to scan
+                }
+                const keys = collect_keys(parsed);
+                for (const forbidden of FORBIDDEN_VERDICT_KEYS) {
+                    expect(keys, `${uri} must not author a "${forbidden}" key`).not.toContain(forbidden);
+                }
+            }
         } finally {
             await close();
         }
