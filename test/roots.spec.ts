@@ -39,6 +39,19 @@ describe('confine_path', () => {
         expect(confine_path(root, '--output')).toBeNull();
     });
 
+    it('accepts an absolute in-workspace path when the workspace root is reached via a symlink (#27)', () => {
+        const linkParent = realpathSync(mkdtempSync(join(tmpdir(), 'swarm-mcp-link-')));
+        try {
+            const link = join(linkParent, 'link');
+            symlinkSync(root, link); // link -> the real root
+            // confine_path gets the canonical root + an absolute candidate THROUGH the symlink; it must
+            // still resolve to the in-workspace file rather than lexically reject the symlinked prefix.
+            expect(confine_path(root, join(link, 'specs', 'a', 'spec.md'))).toBe('specs/a/spec.md');
+        } finally {
+            rmSync(linkParent, { recursive: true, force: true });
+        }
+    });
+
     it('rejects a symlink that escapes the root', () => {
         const outside = realpathSync(mkdtempSync(join(tmpdir(), 'swarm-mcp-outside-')));
         writeFileSync(join(outside, 'secret.md'), 'x');

@@ -35,22 +35,22 @@ export function confine_path(root: string, candidate: string): string | null {
     }
     const rootReal = resolve_root(root);
     const resolved = isAbsolute(candidate) ? resolve(candidate) : resolve(rootReal, candidate);
-    if (!inside_root(relative(rootReal, resolved))) {
-        return null; // lexical `..` / absolute / flag-shaped escape
-    }
-    // Resolve the deepest EXISTING ancestor through any symlinks; require it to stay inside root. This
-    // catches a symlinked parent dir whether or not the leaf exists.
+    // Canonicalize the deepest EXISTING ancestor through any symlinks, then re-anchor the (possibly
+    // not-yet-existing) leaf onto it BEFORE the inside-root check. This is correct even when the root or
+    // an ancestor is itself reached via a symlink (macOS /tmp, or ~/code -> /data/code): an absolute
+    // in-workspace path is canonicalized rather than lexically rejected for its symlinked prefix (#27).
+    // It still rejects a symlinked ancestor or leaf that points OUTSIDE the root.
     let existing = resolved;
     while (!existsSync(existing) && dirname(existing) !== existing) {
         existing = dirname(existing);
     }
     const realExisting = existsSync(existing) ? realpathSync(existing) : existing;
-    const ancestorRel = relative(rootReal, realExisting);
-    if (ancestorRel.startsWith('..') || isAbsolute(ancestorRel)) {
-        return null; // an existing ancestor (or a symlink on it) resolves outside root
+    const tail = relative(existing, resolved); // '' when the full path already exists
+    const canonical = tail === '' ? realExisting : resolve(realExisting, tail);
+    const finalRel = relative(rootReal, canonical);
+    if (finalRel.startsWith('..') || isAbsolute(finalRel)) {
+        return null; // resolves outside root (a `..`/absolute escape or a symlink pointing out)
     }
-    // Canonicalize the full path when it exists (catches a leaf that is itself a symlink), else lexical.
-    const finalRel = relative(rootReal, existsSync(resolved) ? realpathSync(resolved) : resolved);
     return inside_root(finalRel) ? finalRel : null;
 }
 

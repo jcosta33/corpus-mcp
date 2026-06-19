@@ -44,7 +44,9 @@ export function register_tools(server: McpServer, ctx: Ctx): void {
         {
             title: 'Check one artifact file',
             description:
-                'Run the Swarm checks contract over one file (spec / task / review / change-plan). Returns diagnostics, never a verdict.',
+                'Run the Swarm checks contract over one file (spec, review, or change-plan) via `swarm check`. ' +
+                'A task packet is NOT supported — `swarm check` lints it as a spec and emits spurious warnings. ' +
+                'Returns diagnostics, never a verdict.',
             inputSchema: { path: z.string().describe('workspace-relative path to the artifact file') },
             outputSchema: ENVELOPE_OUTPUT_SHAPE,
             annotations: READ_ONLY,
@@ -110,9 +112,11 @@ export function register_tools(server: McpServer, ctx: Ctx): void {
         {
             title: 'Validate a review packet (structure + evidence)',
             description:
-                'Run the review-file checks (C012 coverage, C013 verify-evidence) over a review packet: structure, status, ' +
-                'and that Pass rows carry evidence. The diff-aware half (out-of-scope, self-report) comes from ' +
-                'reconcile_review when a worktree exists. Returns diagnostics, never a verdict.',
+                'Run the review-file checks (C012 coverage, C013 verify-evidence binding) over a review packet via ' +
+                '`swarm check`. Surfaces ONLY those two checks — the structural facts (an invalid status, missing ' +
+                'sections, a Pass row with empty evidence) and the diff-aware facts (out-of-scope, self-report) are ' +
+                'NOT run by this check; they come from reconcile_review when a worktree exists. So a clean result ' +
+                'here is not a full packet validation. Returns diagnostics, never a verdict.',
             inputSchema: { review: z.string().describe('workspace-relative path to the review packet file') },
             outputSchema: ENVELOPE_OUTPUT_SHAPE,
             annotations: READ_ONLY,
