@@ -250,6 +250,21 @@ describe('swarm-mcp server', () => {
         }
     });
 
+    it('passes a TASK- prefixed id straight through to `swarm show task` (no pre-strip) — #blind-field-test', async () => {
+        const { client, close } = await connectClient();
+        try {
+            await client.callTool({ name: 'swarm_get_task', arguments: { task: 'TASK-feat' } });
+            const showCall = invocations().find((a) => a[0] === 'show' && a[1] === 'task');
+            expect(showCall).toBeDefined();
+            // The id reaches the CLI as 'TASK-feat' (un-stripped) — the CLI canonically resolves either
+            // form; pre-stripping to the bare 'feat' mismatched the tasks/TASK-feat.md `swarm new task` writes.
+            expect(showCall).toContain('TASK-feat');
+            expect(showCall).not.toContain('feat');
+        } finally {
+            await close();
+        }
+    });
+
     it('no tool adds a verdict key anywhere in its OWN authored content (recursive, INV-002)', async () => {
         const collectKeys = (obj: unknown, skip: string, acc: string[] = []): string[] => {
             if (Array.isArray(obj)) {

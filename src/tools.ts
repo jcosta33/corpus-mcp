@@ -141,11 +141,13 @@ export function register_tools(server: McpServer, ctx: Ctx): void {
             annotations: READ_ONLY,
         },
         ({ task }) => {
-            const stem = task_stem(task);
-            if (!is_safe_segment(stem)) {
+            // Pass the id/slug through unchanged: `swarm show task` resolves either `pastebin` or
+            // `TASK-pastebin` to the canonical tasks/TASK-<slug>.md, so pre-stripping the prefix (which
+            // mismatched the file `swarm new task` writes) is both unnecessary and wrong.
+            if (!is_safe_segment(task)) {
                 return tool_error(`invalid task id/stem: ${task}`);
             }
-            return respond(invoke_swarm(ctx.env, 'show', ['task', stem]));
+            return respond(invoke_swarm(ctx.env, 'show', ['task', task]));
         }
     );
 
