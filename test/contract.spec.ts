@@ -13,7 +13,7 @@ import {
 } from "../src/corpus/contract.ts";
 
 // The DRIFT TRIPWIRE has two halves that together pin stub → contract → reality:
-//   (1) the captured fixtures were recorded from the REAL `corpus … --json` (the corpus-hq workspace —
+//   (1) the captured fixtures were recorded from the REAL `corpus … --json` (the corpus-works workspace —
 //       note the absolute paths). Parsing them proves the CONTRACT matches reality; a corpus-cli rename
 //       or dropped field fails the parse here instead of the adapter silently producing wrong output.
 //   (2) the test STUB (the binary the integration tests run against) is parsed through the SAME schemas,
