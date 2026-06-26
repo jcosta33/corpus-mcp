@@ -55,6 +55,25 @@ describe("the contract matches the real --json shapes (captured fixtures)", () =
     }
   });
 
+  it("WorkspaceFinding accepts the current advisory codes and trips on an unknown one (kept in sync with checkWorkspace.ts)", () => {
+    const withFinding = (code: string) => ({
+      level: "warning",
+      verdict: "clean",
+      specs: [],
+      changePlans: [],
+      workspaceFindings: [{ code, message: "x" }],
+    });
+    // The newest advisory code (ADR-0110) must parse — the enum is synced to the CLI's WorkspaceFinding.
+    expect(
+      WorkspaceCheckSchema.safeParse(withFinding("incomplete-execution-digest"))
+        .success,
+    ).toBe(true);
+    // A code the CLI does not emit must trip the wire (the whole point of the closed set).
+    expect(
+      WorkspaceCheckSchema.safeParse(withFinding("totally-new-code")).success,
+    ).toBe(false);
+  });
+
   it("check <file> --json → FileCheck", () => {
     expect(FileCheckSchema.safeParse(fixture("check-file.json")).success).toBe(
       true,

@@ -63,12 +63,26 @@ const WorkspaceSpecCheck = z
     diagnostics: z.array(Diagnostic),
   })
   .passthrough();
-// A workspace-level finding (checkWorkspace.ts `WorkspaceFinding`) — a C002 duplicate-id collision or
-// a kit-validity problem (placeholder / missing-template). These live OUTSIDE any spec's diagnostics,
-// so an agent that reads only `specs[]` would miss them; modelled so they are asserted, not passed-through.
+// A workspace-level finding (checkWorkspace.ts `WorkspaceFinding`) — a C002/C017 collision, a kit-
+// validity problem (placeholder / missing-template / agents-oversize), or one of the reconcile-only
+// advisories (supersede-* / duplicate-content / unpromoted-finding / incomplete-execution-digest). These
+// live OUTSIDE any spec's diagnostics, so an agent reading only `specs[]` would miss them; the closed
+// `code` set is the drift tripwire — a new/renamed CLI finding code trips a contract test (kept in sync
+// with checkWorkspace.ts `WorkspaceFinding`).
 const WorkspaceFinding = z
   .object({
-    code: z.enum(["C002", "placeholder", "missing-template"]),
+    code: z.enum([
+      "C002",
+      "C017",
+      "placeholder",
+      "missing-template",
+      "agents-oversize",
+      "supersede-unresolved",
+      "supersede-missing-pointer",
+      "duplicate-content",
+      "unpromoted-finding",
+      "incomplete-execution-digest",
+    ]),
     message: z.string(),
   })
   .passthrough();
