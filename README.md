@@ -43,8 +43,7 @@ run a model loop, write a board, write a review result, or issue a verdict.
   pass-through-only enum (a CLI advisory code the adapter merely relays) is `z.string()` — a benign additive
   CLI enum value is not a corpus-mcp break. The fixtures are **generated** from the real binary
   (`pnpm fixtures`), and a test re-runs the generator so they can't go stale.
-- **Many libraries, not a framework.** It couples to corpus-cli only through the public `--json` interface
-  (corpus [ADR-0085](https://github.com/jcosta33/corpus/blob/main/docs/adrs/0085-corpus-mcp-adapts-the-json-contract.md)),
+- **Many libraries, not a framework.** It couples to corpus-cli only through the public `--json` interface,
   so corpus-cli keeps its minimal footprint and each piece stays useful on its own.
 
 ## Run it
@@ -84,7 +83,7 @@ Node ≥ 22.6 (it strips types at runtime).
   `outputSchema` and takes a `response_format: concise|detailed` — concise returns the relevant slice
   (~⅓ the tokens), the verbatim payload on demand.
 - **Reconcile tool (1).** `corpus_reconcile` — reconcile a `task` (or a `spec`, for the task-less 1:1
-  review-to-spec case, ADR-0103) against its spec and the worktree diff. ONE engine whether or not a review
+  review-to-spec case) against its spec and the worktree diff. ONE engine whether or not a review
   packet exists yet (the report carries `hasReviewPacket`; there is no separate scan tool). The
   implementer-vs-reviewer _stance_ split lives in the prompts, not in two tools.
 - **Safe-write tools (3) — verdict-free prepare ops.** `corpus_scaffold_spec` (`new spec`),

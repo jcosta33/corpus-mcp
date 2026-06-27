@@ -98,6 +98,9 @@ describe.skipIf(!corpusPresent)(
       } finally {
         rmSync(tmp, { recursive: true, force: true });
       }
-    });
+      // Spawns the real corpus binary to regenerate 11 fixtures; legitimately
+      // exceeds the 5s default under the parallel coverage run. Not a race — a
+      // genuinely slow subprocess, so a longer per-test timeout is the right fix.
+    }, 60_000);
   },
 );

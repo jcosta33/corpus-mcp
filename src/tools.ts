@@ -188,7 +188,7 @@ export function register_tools(server: McpServer, ctx: Ctx): void {
     {
       title: "Reconcile a run vs its spec/task and the diff (no verdict)",
       description:
-        "Reconcile a task (or a spec, via `spec:` — the task-less 1:1 review-to-spec case, ADR-0103) " +
+        "Reconcile a task (or a spec, via `spec:` — the task-less 1:1 review-to-spec case) " +
         "against its spec and the worktree diff: coverage gaps, out-of-scope changes, empty-evidence Pass " +
         "rows, and self-report mismatches as facts + a structured human-attention list. This is the SAME " +
         "engine whether or not a review packet exists yet (the report carries hasReviewPacket — no separate " +
@@ -203,7 +203,7 @@ export function register_tools(server: McpServer, ctx: Ctx): void {
           .string()
           .optional()
           .describe(
-            "spec id/slug for a task-less 1:1 review-to-spec reconcile (ADR-0103) — mutually exclusive with `task`",
+            "spec id/slug for a task-less 1:1 review-to-spec reconcile — mutually exclusive with `task`",
           ),
         base: z
           .string()
@@ -247,7 +247,7 @@ export function register_tools(server: McpServer, ctx: Ctx): void {
       title: "Get a parsed task packet",
       description:
         "The task packet`s scope, affected areas, claimed changes, frontmatter (id/source/status), and the " +
-        "cross-root embedded spec slice (embeddedSpecId/embeddedRequirements, ADR-0100) when present. " +
+        "cross-root embedded spec slice (embeddedSpecId/embeddedRequirements) when present. " +
         "concise returns the scope-bearing identity slice; detailed the full packet. Read-only.",
       inputSchema: {
         task: z.string().describe("task id or stem"),
@@ -278,7 +278,7 @@ export function register_tools(server: McpServer, ctx: Ctx): void {
       description:
         "The spec`s frontmatter (incl. the living-spec snapshot/supersededBy fields), requirements (id + line + " +
         "named verify command), sections, and the append-only `## Execution` run-record (the durable history of " +
-        "each change once tasks/reviews are ephemeral, ADR-0103/0104). concise drops the Execution prose + line " +
+        "each change once tasks/reviews are ephemeral). concise drops the Execution prose + line " +
         "numbers; detailed returns it whole. Read-only.",
       inputSchema: {
         spec: z.string().describe("spec id (e.g. SPEC-auth)"),
@@ -306,7 +306,7 @@ export function register_tools(server: McpServer, ctx: Ctx): void {
       description:
         "The review packet`s status, coverage rows, verify blocks, and identity/staleness frontmatter (which " +
         "spec/task it reviews — `spec:` for the task-less 1:1 case — plus the fast-track reviewedSha/evidenceHash " +
-        "pins, ADR-0103/0107). concise drops the evidence prose + staleness pins; detailed returns them. " +
+        "pins). concise drops the evidence prose + staleness pins; detailed returns them. " +
         "Read-only; the verdict is the human`s.",
       inputSchema: {
         task: z
@@ -364,7 +364,7 @@ function register_safe_write_tools(server: McpServer, ctx: Ctx): void {
     {
       title: "Scaffold a fresh draft spec (prepare op — no verdict)",
       description:
-        "VERDICT-FREE PREPARE OP (ADR-0077): scaffold a fresh draft `specs/<slug>/spec.md` from the kit " +
+        "VERDICT-FREE PREPARE OP: scaffold a fresh draft `specs/<slug>/spec.md` from the kit " +
         "template via `corpus new spec`. Creates the skeleton for an author to fill — it writes NO board, " +
         "NO review result, and issues NO verdict; it never overwrites an existing spec. Returns the created " +
         "path + spec id.",
@@ -391,7 +391,7 @@ function register_safe_write_tools(server: McpServer, ctx: Ctx): void {
     {
       title: "Split a spec into a task slice (prepare op — no verdict)",
       description:
-        "VERDICT-FREE PREPARE OP (ADR-0077): cut a task packet from a named spec via `corpus new task " +
+        "VERDICT-FREE PREPARE OP: cut a task packet from a named spec via `corpus new task " +
         "--from <SPEC>`, copying the named requirement ids into its Scope (scope is COPIED, never invented). " +
         "Use when one spec fans out into parallel slices — 1:1 work needs no task. It writes NO board, NO " +
         "review result, and issues NO verdict; it never overwrites an existing packet. Returns the created " +
@@ -435,7 +435,7 @@ function register_safe_write_tools(server: McpServer, ctx: Ctx): void {
     {
       title: "Scaffold a candidate finding (prepare op — no verdict)",
       description:
-        "VERDICT-FREE PREPARE OP (ADR-0077): scaffold ONE candidate `findings/<slug>.md` from a finished " +
+        "VERDICT-FREE PREPARE OP: scaffold ONE candidate `findings/<slug>.md` from a finished " +
         "task/review id via `corpus promote`, pre-filling `from:` and leaving the what-we-learned body a " +
         "placeholder. It asserts NO learning of its own (status: candidate, never accepted), writes NO " +
         "board, and issues NO verdict — acceptance is the owner's. Backs the corpus_finding_candidate " +
