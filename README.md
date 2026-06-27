@@ -14,8 +14,7 @@ Two things here are not available by handing an agent a shell:
    changes, empty-evidence Pass rows, self-report mismatches, each as `{category, severity, message, ref}`.
    corpus-mcp surfaces _facts_; a human or an independent reviewer owns the Pass / Fail / Unverified /
    Blocked result. An empty or weak Evidence cell reads Unverified regardless of a clean reconcile. An
-   agent _cannot_ make this server declare its own work done — that is the product's point (ADR-0077 D8,
-   ADR-0063).
+   agent _cannot_ make this server declare its own work done — that is the product's point.
 2. **It serves clients that have no shell.** Claude Desktop, Cursor, and other non-terminal clients cannot
    run `corpus … --json` themselves. For them the MCP _resources_ (the board, the checks contract, parsed
    specs/tasks/reviews/findings) and _prompts_ (the implementer/reviewer stances) are the only way to bring
