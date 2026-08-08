@@ -4,7 +4,7 @@
   "packageRoot": "git-root",
   "binary": "bin/suspec.js",
   "binarySha256": "11535376be14836c576a058a8f731679f197b2993ff5cb4f581f823269314a8d",
-  "gitHead": "05be6b41c7cd9b6e706ab015c4384bc6f08f8280",
+  "gitHead": "46c641102d78e26db3c23b0813fc2f3212e8d79f",
   "worktreeDirty": false,
   "worktreeSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 }
