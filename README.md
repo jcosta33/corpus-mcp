@@ -85,14 +85,17 @@ CLI precedence:
 
 Each tool call supplies full artifact paths. The server binds no repository, workspace,
 configuration, or store. It is an adapter, not a second product brain.
-`~/.agents/artifacts/<workspace>/` has no special runtime meaning.
+`~/.agents/artifacts/<workspace>/` has no special runtime meaning. User-level policy installation is
+the CLI's job: run `suspec setup` directly. MCP exposes no setup, storage, promotion, lifecycle, or
+orchestration surface.
 
 ## Security
 
 - Primary and companion paths must be absolute and contain no control, format, or line-separator
   characters.
 - The adapter passes a fixed argument array without a shell.
-- Only `check` and supported companion or contract flags reach the CLI.
+- Only `check` and supported companion or contract flags reach the CLI. `setup` is rejected before a
+  subprocess starts.
 - Review checks may read local relative evidence receipts linked by the review.
 - The CLI check surface is read-only.
 

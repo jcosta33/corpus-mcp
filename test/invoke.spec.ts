@@ -120,8 +120,9 @@ describe("invoke_suspec — the subprocess edge", () => {
     );
   });
 
-  it("refuses every verb the CLI does not have (check is the whole surface)", () => {
+  it("refuses every verb outside the MCP check surface before spawning", () => {
     for (const verb of [
+      "setup",
       "status",
       "store",
       "show",

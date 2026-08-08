@@ -1,10 +1,8 @@
 // The ONE subprocess edge. suspec-mcp never imports suspec-cli's internals — it shells out to the
 // `suspec` CLI's `--json` contract with a FIXED argv array (never a shell string, never a client-injected
-// flag). The CLI's whole surface is one verb (`suspec check`), so the allow-list is exactly
-// that: `check`, plus the companion flags (`--spec`/`--task`, each value a full path already
-// validated by the tool boundary) and the bare `--contract`. `--json` is always appended;
-// suspec-mcp passes no other flag. This keeps suspec-cli at its minimal footprint and couples the two
-// repos only through the public, tested JSON interface.
+// flag). MCP exposes one CLI verb: `check`, plus the companion flags (`--spec`/`--task`, each value a
+// full path already validated by the tool boundary) and the bare `--contract`. `--json` is always
+// appended. The CLI's separate setup command can never cross this boundary.
 
 import { execFile, type ExecFileException } from "node:child_process";
 import { statSync } from "node:fs";
@@ -23,12 +21,11 @@ export type SuspecEnv = Readonly<{
   timeoutMs?: number; // test/embedding override; the server uses the bounded default
 }>;
 
-// The one verb the CLI exposes — anything else is refused before a subprocess ever spawns.
+// The one verb MCP exposes — anything else is refused before a subprocess ever spawns.
 const ALLOWED_VERBS = new Set(["check"]);
 
 // The VALUED flags suspec-mcp may pass: review companions whose full paths the tool already validated.
-// The CLI has no mutation or dispatch flag, and a programming slip that
-// tried to invent one would throw here, never silently reach the subprocess.
+// A programming slip that tried to pass mutation or dispatch flags throws before the subprocess.
 const ALLOWED_FLAGS = new Set(["--spec", "--task"]);
 
 // The BARE (valueless) flags: `--contract` selects the checks-contract dump.
