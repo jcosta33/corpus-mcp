@@ -1,0 +1,23 @@
+src/suspec/invoke.ts
+  s_0a3429e31e555d::t_b8c8049acc879e 3-5,24,28
+test/invoke.spec.ts
+  s_0a3429e31e555d::t_b8c8049acc879e 123,125
+README.md
+  s_0a3429e31e555d::t_b8c8049acc879e 88-90,97-98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "ca61ff6a8ad6942c7ba74e61b0a9b0bc6b9d17e0",
+  "prompts": {},
+  "sessions": {
+    "s_0a3429e31e555d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f1568-8dda-7540-97a5-9da760eadac4",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "José Costa <j.costa.3394@gmail.com>"
+    }
+  }
+}
