@@ -1,0 +1,49 @@
+test/stdio.spec.ts
+  s_0a3429e31e555d::t_313e7e1d5625dd 52
+src/suspec/contract.ts
+  s_0a3429e31e555d::t_ce12749e7a29e5 10,40-42,48-51,88,146
+  s_0a3429e31e555d::t_39b4cebad87dc4 202-208,210-219,221-243,246-252,254
+scripts/generate-fixtures.mjs
+  s_0a3429e31e555d::t_8494c8acde5827 343-374,549,569-572
+test/fixtures/contract.json
+  s_0a3429e31e555d::t_c7828e3868e202 2,118-132
+test/fixtures/check-campaign.json
+  s_0a3429e31e555d::t_c7828e3868e202 1-6
+test/server.spec.ts
+  s_0a3429e31e555d::t_313e7e1d5625dd 405
+README.md
+  s_0a3429e31e555d::t_97c592f6a15be8 21-22
+  s_0a3429e31e555d::t_ce12749e7a29e5 4,35
+test/contract.spec.ts
+  s_0a3429e31e555d::t_313e7e1d5625dd 332,366
+  s_0a3429e31e555d::t_8494c8acde5827 55-57,126-134,189
+  s_0a3429e31e555d::t_4c31cc034c6d75 54
+test/generated-fixtures.spec.ts
+  s_0a3429e31e555d::t_313e7e1d5625dd 122
+  s_0a3429e31e555d::t_8494c8acde5827 43
+test/slices.spec.ts
+  s_0a3429e31e555d::t_313e7e1d5625dd 82,85,92,99-100
+  s_0a3429e31e555d::t_e50a648a033357 22-27
+test/resources.spec.ts
+  s_0a3429e31e555d::t_ff9d787bef4edb 25
+  s_0a3429e31e555d::t_313e7e1d5625dd 104
+  s_0a3429e31e555d::t_e8841fd0c9dd29 152-154
+test/fixtures/provenance.json
+  s_0a3429e31e555d::t_c2802d4dbc7210 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "ba5ff3916bf4a7454980ccfad2d6819de15b218c",
+  "prompts": {},
+  "sessions": {
+    "s_0a3429e31e555d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f1568-8dda-7540-97a5-9da760eadac4",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "José Costa <j.costa.3394@gmail.com>"
+    }
+  }
+}
