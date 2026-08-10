@@ -1,5 +1,5 @@
 {
-  "version": "0.23.0",
+  "version": "0.24.0",
   "checks": [
     {
       "id": "C001",
@@ -114,6 +114,21 @@
     {
       "id": "C028",
       "name": "requirement-shape",
+      "severity": "hard-error"
+    },
+    {
+      "id": "C029",
+      "name": "campaign-shape",
+      "severity": "hard-error"
+    },
+    {
+      "id": "C030",
+      "name": "campaign-authority",
+      "severity": "hard-error"
+    },
+    {
+      "id": "C031",
+      "name": "campaign-ready",
       "severity": "hard-error"
     }
   ]

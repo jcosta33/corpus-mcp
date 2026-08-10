@@ -1,7 +1,7 @@
 # suspec-mcp
 
 A thin MCP stdio adapter for shell-less access to Suspec's deterministic checker. Thin is the feature.
-It requires checks contract `0.23.0`, validates every CLI JSON payload, and preserves ordered reports
+It requires checks contract `0.24.0`, validates every CLI JSON payload, and preserves ordered reports
 and exit status.
 
 ## Tools
@@ -18,8 +18,8 @@ selects behavior.
 | `taskPath`       | optional absolute task companion for one review |
 | `responseFormat` | `concise` or `detailed`                         |
 
-Spec, task, change-plan, and review inputs receive their CLI checks. Inventory, audit, and research
-return `checked: false`. Missing and unknown types are rejected.
+Spec, task, change-plan, campaign, and review inputs receive their CLI checks. Inventory, audit, and
+research return `checked: false`. Missing and unknown types are rejected.
 
 One invocation preserves cross-file checks such as C002. Task paths share one `specPath`; every task
 must name that spec. A review is the only primary when `taskPath` is present. Invalid companion
@@ -32,7 +32,7 @@ Every artifact result repeats its type. Only the optional final `(file set)` rep
 Returns the contract version plus each core check's ID and severity in concise mode. Use
 `responseFormat: "detailed"` for names. The same contract is available at `suspec://checks`.
 
-Startup and resource reads require exact contract `0.23.0` at exit 0. Resource failure throws instead
+Startup and resource reads require exact contract `0.24.0` at exit 0. Resource failure throws instead
 of returning an error document as resource content.
 
 ## Envelope

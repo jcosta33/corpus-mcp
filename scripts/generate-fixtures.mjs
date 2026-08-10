@@ -340,6 +340,38 @@ const AUDIT = [
   "",
 ].join("\n");
 
+const CAMPAIGN = [
+  "---",
+  "type: campaign",
+  "id: CAMPAIGN-demo",
+  "status: ready",
+  "ledger: https://example.test/issues/1",
+  "sources:",
+  "  - https://example.test/spec.md",
+  "---",
+  "",
+  "## Objective",
+  "",
+  "Finish the governed delivery.",
+  "",
+  "## Completion contract",
+  "",
+  "Current main satisfies every governing obligation.",
+  "",
+  "## Authorities",
+  "",
+  "The named sources and ledger govern.",
+  "",
+  "## Operating loop",
+  "",
+  "Read, reconcile, select, execute, verify, record, and repeat.",
+  "",
+  "## Stops",
+  "",
+  "Stop at completion or a named human decision.",
+  "",
+].join("\n");
+
 const SPEC_SECOND = SPEC.replaceAll(
   "SPEC-demo-feature",
   "SPEC-demo-second",
@@ -514,6 +546,7 @@ function main() {
     writeFileSync(join(scratch, "spec-demo.md"), SPEC);
     writeFileSync(join(scratch, "task-demo.md"), TASK);
     writeFileSync(join(scratch, "audit-demo.md"), AUDIT);
+    writeFileSync(join(scratch, "campaign-demo.md"), CAMPAIGN);
     writeFileSync(join(scratch, "spec-second.md"), SPEC_SECOND);
     writeFileSync(join(scratch, "spec-duplicate.md"), SPEC_DUPLICATE);
     writeFileSync(join(scratch, "not-a-task.md"), NOT_A_TASK);
@@ -533,6 +566,10 @@ function main() {
     // 1. the per-file check reports: a clean spec, a clean review (both companions), and a
     //    diagnostic-carrying review.
     write("check-spec", suspec(scratch, ["check", "spec-demo.md"], "clean", 0));
+    write(
+      "check-campaign",
+      suspec(scratch, ["check", "campaign-demo.md"], "clean", 0),
+    );
     write(
       "check-task",
       suspec(

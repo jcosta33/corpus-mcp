@@ -40,6 +40,7 @@ const execFileAsync = promisify(execFile);
 
 const FIXTURES = [
   "check-spec",
+  "check-campaign",
   "check-task",
   "check-review",
   "check-review-diagnostics",
@@ -118,7 +119,7 @@ describe("fixture capture exit assertions", () => {
       2,
       JSON.stringify({ error: "Usage", message: "bad input" }),
     ],
-    ["json", "contract", 0, JSON.stringify({ version: "0.23.0", checks: [] })],
+    ["json", "contract", 0, JSON.stringify({ version: "0.24.0", checks: [] })],
     ["jsonl", "clean", 0, JSON.stringify(report("clean", "clean.md"))],
     [
       "jsonl",

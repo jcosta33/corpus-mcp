@@ -22,7 +22,7 @@ const contractExitAfterProbeBin = join(
 );
 const malformedContracts = [
   ["empty-contract-suspec.mjs", /missing check ID C001/],
-  ["partial-contract-suspec.mjs", /missing check ID C028/],
+  ["partial-contract-suspec.mjs", /missing check ID C031/],
   ["duplicate-contract-suspec.mjs", /duplicate check ID C001/],
   ["unknown-contract-suspec.mjs", /unknown check ID C999/],
   ["corrupted-contract-suspec.mjs", /must be named unique-ids/],
@@ -101,7 +101,7 @@ describe("suspec-mcp resources", () => {
         version: string;
         checks: { id: string }[];
       };
-      expect(parsed.version).toBe("0.23.0");
+      expect(parsed.version).toBe("0.24.0");
       expect(parsed.checks.length).toBeGreaterThan(0);
       expect(invocations()).toEqual([
         ["check", "--contract", "--json"],
@@ -149,7 +149,9 @@ describe("suspec-mcp resources", () => {
     await expect(
       create_server({ env: { bin: oldContractBin, cwd: root } }),
     ).rejects.toThrow(
-      new RegExp(`checks contract ${SUPPORTED_CONTRACT_VERSION.replaceAll(".", "\\.")}`),
+      new RegExp(
+        `checks contract ${SUPPORTED_CONTRACT_VERSION.replaceAll(".", "\\.")}`,
+      ),
     );
   });
 

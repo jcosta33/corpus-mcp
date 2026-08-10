@@ -52,6 +52,10 @@ function runStub(args: string[]): { data: unknown; exit: number | null } {
       "---\ntype: audit\nid: AUDIT-x\n---\n",
     );
     writeFileSync(
+      join(dir, "campaign.md"),
+      "---\ntype: campaign\nid: CAMPAIGN-x\nstatus: ready\nledger: https://example.test/issues/1\nsources: [https://example.test/spec.md]\n---\n",
+    );
+    writeFileSync(
       join(dir, "scope-less-task.md"),
       "---\ntype: task\nid: TASK-x\nsource:\n  - SPEC-x\n---\n",
     );
@@ -119,6 +123,15 @@ describe("the contract matches the real --json shapes (captured fixtures)", () =
     }
   });
 
+  it("check <campaign> --json → a clean CheckReport", () => {
+    const parsed = CheckReportSchema.safeParse(fixture("check-campaign.json"));
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.type).toBe("campaign");
+      expect(parsed.data.level).toBe("clean");
+    }
+  });
+
   it("a diagnostic-carrying review report pins the diagnostic fields (code/severity/message/line)", () => {
     const parsed = CheckReportSchema.safeParse(
       fixture("check-review-diagnostics.json"),
@@ -173,6 +186,7 @@ describe("the contract matches the real --json shapes (captured fixtures)", () =
       "task",
       "review",
       "change-plan",
+      "campaign",
       "finding",
       "inspection",
     ]) {
@@ -315,7 +329,7 @@ describe("the contract matches the real --json shapes (captured fixtures)", () =
     const parsed = ContractSchema.safeParse(fixture("contract.json"));
     expect(parsed.success).toBe(true);
     if (parsed.success) {
-      expect(parsed.data.version).toBe("0.23.0");
+      expect(parsed.data.version).toBe("0.24.0");
       expect(parsed.data.checks.length).toBeGreaterThan(0);
       for (const check of parsed.data.checks) {
         expect(check.id).toMatch(/^C\d{3}$/);
@@ -349,7 +363,7 @@ describe("the contract matches the real --json shapes (captured fixtures)", () =
         contract.checks[0].severity = "warning";
       },
     ],
-  ])("rejects a %s 0.23.0 checks table", (_case, mutate) => {
+  ])("rejects a %s 0.24.0 checks table", (_case, mutate) => {
     const contract = fixture("contract.json") as {
       checks: { id: string; name: string; severity: string }[];
     };

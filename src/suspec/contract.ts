@@ -7,7 +7,7 @@
 
 import { z } from "zod";
 
-export const SUPPORTED_CONTRACT_VERSION = "0.23.0" as const;
+export const SUPPORTED_CONTRACT_VERSION = "0.24.0" as const;
 
 export const SUPPORTED_CHECKS = [
   { id: "C001", name: "unique-ids", severity: "hard-error" },
@@ -37,14 +37,18 @@ export const SUPPORTED_CHECKS = [
   { id: "C026", name: "evidence-receipt-resolves", severity: "hard-error" },
   { id: "C027", name: "review-spec-ref", severity: "hard-error" },
   { id: "C028", name: "requirement-shape", severity: "hard-error" },
+  { id: "C029", name: "campaign-shape", severity: "hard-error" },
+  { id: "C030", name: "campaign-authority", severity: "hard-error" },
+  { id: "C031", name: "campaign-ready", severity: "hard-error" },
 ] as const;
 
 // --- suspec check <artifact> --json → the per-file check report ------------------------------------
 // One diagnostic from the checks contract: `code` is a contract C-code, `severity`/`level` are the
 // CLI's own recorded facts (pass-through), `line` is present but null when the check has no anchor.
-const SUPPORTED_CHECK_BY_ID = new Map<string, (typeof SUPPORTED_CHECKS)[number]>(
-  SUPPORTED_CHECKS.map((check) => [check.id, check]),
-);
+const SUPPORTED_CHECK_BY_ID = new Map<
+  string,
+  (typeof SUPPORTED_CHECKS)[number]
+>(SUPPORTED_CHECKS.map((check) => [check.id, check]));
 const C013_CMD_MISMATCH =
   /^coverage row .+'s verify block records a cmd that does not match the requirement's named Verify command$/;
 
@@ -81,7 +85,7 @@ const CheckDiagnostic = z
   });
 export const CheckReportSchema = z
   .object({
-    type: z.enum(["spec", "task", "review", "change-plan"]),
+    type: z.enum(["spec", "task", "review", "change-plan", "campaign"]),
     level: z.enum(["clean", "warning", "blocking"]),
     path: z.string(),
     diagnostics: z.array(CheckDiagnostic),
@@ -139,7 +143,7 @@ export const UncheckedArtifactSchema = z
   });
 
 // What `suspec check <artifact> --json` can emit on a success exit: a check report (spec, task,
-// review, change-plan) or the unchecked notice.
+// review, change-plan, campaign) or the unchecked notice.
 export const CheckFileSchema = z.union([
   CheckReportSchema,
   UncheckedArtifactSchema,
@@ -195,57 +199,59 @@ const ContractCheckSchema = z
   .object({ id: z.string(), name: z.string(), severity: z.string() })
   .passthrough();
 
-const ContractChecksSchema = z.array(ContractCheckSchema).superRefine((checks, ctx) => {
-  const expectedById = new Map<string, (typeof SUPPORTED_CHECKS)[number]>(
-    SUPPORTED_CHECKS.map((check) => [check.id, check]),
-  );
-  const seen = new Set<string>();
+const ContractChecksSchema = z
+  .array(ContractCheckSchema)
+  .superRefine((checks, ctx) => {
+    const expectedById = new Map<string, (typeof SUPPORTED_CHECKS)[number]>(
+      SUPPORTED_CHECKS.map((check) => [check.id, check]),
+    );
+    const seen = new Set<string>();
 
-  for (const [index, check] of checks.entries()) {
-    if (seen.has(check.id)) {
-      ctx.addIssue({
-        code: "custom",
-        message: `duplicate check ID ${check.id}`,
-        path: [index, "id"],
-      });
-      continue;
-    }
-    seen.add(check.id);
+    for (const [index, check] of checks.entries()) {
+      if (seen.has(check.id)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `duplicate check ID ${check.id}`,
+          path: [index, "id"],
+        });
+        continue;
+      }
+      seen.add(check.id);
 
-    const expected = expectedById.get(check.id);
-    if (expected === undefined) {
-      ctx.addIssue({
-        code: "custom",
-        message: `unknown check ID ${check.id}`,
-        path: [index, "id"],
-      });
-      continue;
+      const expected = expectedById.get(check.id);
+      if (expected === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          message: `unknown check ID ${check.id}`,
+          path: [index, "id"],
+        });
+        continue;
+      }
+      if (check.name !== expected.name) {
+        ctx.addIssue({
+          code: "custom",
+          message: `check ${check.id} must be named ${expected.name}`,
+          path: [index, "name"],
+        });
+      }
+      if (check.severity !== expected.severity) {
+        ctx.addIssue({
+          code: "custom",
+          message: `check ${check.id} must have severity ${expected.severity}`,
+          path: [index, "severity"],
+        });
+      }
     }
-    if (check.name !== expected.name) {
-      ctx.addIssue({
-        code: "custom",
-        message: `check ${check.id} must be named ${expected.name}`,
-        path: [index, "name"],
-      });
-    }
-    if (check.severity !== expected.severity) {
-      ctx.addIssue({
-        code: "custom",
-        message: `check ${check.id} must have severity ${expected.severity}`,
-        path: [index, "severity"],
-      });
-    }
-  }
 
-  for (const expected of SUPPORTED_CHECKS) {
-    if (!seen.has(expected.id)) {
-      ctx.addIssue({
-        code: "custom",
-        message: `missing check ID ${expected.id}`,
-      });
+    for (const expected of SUPPORTED_CHECKS) {
+      if (!seen.has(expected.id)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `missing check ID ${expected.id}`,
+        });
+      }
     }
-  }
-});
+  });
 
 export const ContractSchema = z
   .object({
