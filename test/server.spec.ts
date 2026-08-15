@@ -402,7 +402,7 @@ describe("suspec-mcp server", () => {
           responseFormat: string;
         };
       };
-      expect(result.structuredContent.data.version).toBe("0.24.0");
+      expect(result.structuredContent.data.version).toBe("0.25.0");
       expect(result.structuredContent.responseFormat).toBe("detailed");
       expect(invocations()).toEqual([["check", "--contract", "--json"]]);
     } finally {

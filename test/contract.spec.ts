@@ -329,7 +329,7 @@ describe("the contract matches the real --json shapes (captured fixtures)", () =
     const parsed = ContractSchema.safeParse(fixture("contract.json"));
     expect(parsed.success).toBe(true);
     if (parsed.success) {
-      expect(parsed.data.version).toBe("0.24.0");
+      expect(parsed.data.version).toBe("0.25.0");
       expect(parsed.data.checks.length).toBeGreaterThan(0);
       for (const check of parsed.data.checks) {
         expect(check.id).toMatch(/^C\d{3}$/);
@@ -363,7 +363,7 @@ describe("the contract matches the real --json shapes (captured fixtures)", () =
         contract.checks[0].severity = "warning";
       },
     ],
-  ])("rejects a %s 0.24.0 checks table", (_case, mutate) => {
+  ])("rejects a %s 0.25.0 checks table", (_case, mutate) => {
     const contract = fixture("contract.json") as {
       checks: { id: string; name: string; severity: string }[];
     };
