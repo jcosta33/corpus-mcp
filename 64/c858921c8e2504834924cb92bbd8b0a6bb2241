@@ -1,0 +1,61 @@
+README.md
+  s_8598c794e118cb::t_b351206c637d19 4,16-18,20-21,24,33
+test/fixtures/contract.json
+  s_8598c794e118cb::t_07300bca7f3432 2
+test/fixtures/error-task-wrong-source.json
+  s_8598c794e118cb::t_07300bca7f3432 3
+test/stdio.spec.ts
+  s_8598c794e118cb::t_3733ae3f67d5bf 52
+test/fixtures/check-task-diagnostics.json
+  s_8598c794e118cb::t_07300bca7f3432 1-13
+scripts/generate-fixtures.mjs
+  s_8598c794e118cb::t_ba010f213e98b9 11-14,224,411,413-418,421,437-445,463,480,483,512-513,516,528,539,551,558
+test/fixtures/error-missing-spec.json
+  s_8598c794e118cb::t_07300bca7f3432 3
+src/suspec/invoke.ts
+  s_8598c794e118cb::t_3ad4a5db8d2a5c 3,27,29,40,159
+test/fixtures/stub-suspec.mjs
+  s_8598c794e118cb::t_b654b4ffa7f7bb 6-7,108,113-115,152-163,165-167,188-193,195,203
+src/tools.ts
+  s_8598c794e118cb::t_3ad4a5db8d2a5c 3,9,46,58,61,70,76
+test/envelope.spec.ts
+  s_8598c794e118cb::t_3733ae3f67d5bf 20,24,48,56
+test/contract.spec.ts
+  s_8598c794e118cb::t_601b2cf15b0428 566-567
+  s_8598c794e118cb::t_23da0f9836d5a4 27,61-62,65-66,88,105,107,112,145,214,280,314-315,322,324,328,332,334,338,352,354,358,372,383,409,451,460,471-478,500-501,505,510,516,523-524,537,555,558,564,571,575-576,578-580,584-585
+test/fixtures/provenance.json
+  s_8598c794e118cb::t_8cd9093731f654 7
+test/invoke.spec.ts
+  s_8598c794e118cb::t_51694634e83904 175
+  s_8598c794e118cb::t_95dcc7e44b0721 168,174,179,226-227,240,246,294-295,302
+test/server.spec.ts
+  s_8598c794e118cb::t_95dcc7e44b0721 86,222,229,233,236-237,240,273,287,328,330-331,395
+test/slices.spec.ts
+  s_8598c794e118cb::t_3733ae3f67d5bf 82,85,92,99-100
+test/generated-fixtures.spec.ts
+  s_8598c794e118cb::t_3733ae3f67d5bf 45,51-52,115,194-198
+test/resources.spec.ts
+  s_8598c794e118cb::t_3733ae3f67d5bf 104
+test/fixtures/error-quoted-bom-missing-spec.json
+  s_8598c794e118cb::t_07300bca7f3432 3
+test/fixtures/error-spec-on-non-task.json
+  s_8598c794e118cb::t_07300bca7f3432 1-4
+src/suspec/contract.ts
+  s_8598c794e118cb::t_3ad4a5db8d2a5c 10,65,75,133,250-251
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "64c858921c8e2504834924cb92bbd8b0a6bb2241",
+  "prompts": {},
+  "sessions": {
+    "s_8598c794e118cb": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "15ca1455-5482-4084-88d1-8dd47611278d",
+        "model": "grok-4.6"
+      },
+      "human_author": "José Costa <j.costa.3394@gmail.com>"
+    }
+  }
+}
