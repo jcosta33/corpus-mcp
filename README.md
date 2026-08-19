@@ -1,7 +1,7 @@
 # suspec-mcp
 
 A thin MCP stdio adapter for shell-less access to Suspec's deterministic checker. Thin is the feature.
-It requires checks contract `0.25.0`, validates every CLI JSON payload, and preserves ordered reports
+It requires checks contract `0.26.0`, validates every CLI JSON payload, and preserves ordered reports
 and exit status.
 
 ## Tools
@@ -13,17 +13,15 @@ selects behavior.
 
 | Input            | Meaning                                         |
 | ---------------- | ----------------------------------------------- |
-| `paths`          | ordered non-empty absolute primary paths        |
-| `specPath`       | absolute spec for task paths or one review      |
-| `taskPath`       | optional absolute task companion for one review |
-| `responseFormat` | `concise` or `detailed`                         |
+| `paths`          | ordered non-empty absolute primary paths |
+| `specPath`       | absolute spec for task paths             |
+| `responseFormat` | `concise` or `detailed`                  |
 
-Spec, task, change-plan, campaign, and review inputs receive their CLI checks. Inventory, audit,
-research, and panel return `checked: false`. Missing and unknown types are rejected.
+Spec, task, change-plan, and campaign inputs receive their CLI checks. Inventory, audit, research,
+and panel return `checked: false`. Missing and unknown types are rejected.
 
 One invocation preserves cross-file checks such as C002. Task paths share one `specPath`; every task
-must name that spec. A review is the only primary when `taskPath` is present. Invalid companion
-pairing produces the CLI's structured refusal with `ok: false`.
+must name that spec. Invalid companion pairing produces the CLI's structured refusal with `ok: false`.
 
 Every artifact result repeats its type. Only the optional final `(file set)` report has none.
 
@@ -32,7 +30,7 @@ Every artifact result repeats its type. Only the optional final `(file set)` rep
 Returns the contract version plus each core check's ID and severity in concise mode. Use
 `responseFormat: "detailed"` for names. The same contract is available at `suspec://checks`.
 
-Startup and resource reads require exact contract `0.25.0` at exit 0. Resource failure throws instead
+Startup and resource reads require exact contract `0.26.0` at exit 0. Resource failure throws instead
 of returning an error document as resource content.
 
 ## Envelope
@@ -96,7 +94,6 @@ orchestration surface.
 - The adapter passes a fixed argument array without a shell.
 - Only `check` and supported companion or contract flags reach the CLI. `setup` is rejected before a
   subprocess starts.
-- Review checks may read local relative evidence receipts linked by the review.
 - The CLI check surface is read-only.
 
 The server can read any path available to its process. Filesystem permission is the security boundary,

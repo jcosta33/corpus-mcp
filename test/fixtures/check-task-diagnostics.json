@@ -1,0 +1,13 @@
+{
+  "type": "task",
+  "level": "blocking",
+  "path": "task-empty-scope.md",
+  "diagnostics": [
+    {
+      "code": "C022",
+      "severity": "hard-error",
+      "message": "`scope:` must be a non-empty list; missing `## Source`; missing `## Scope`; missing `## Do not change`; missing `## Affected areas`; missing `## Verify`; missing `## Agent instructions`; missing `## Run order`; missing `## Findings`; missing `## Run summary`; `## Run order` needs non-empty `Starts after:`; `## Run order` needs non-empty `May run with:`",
+      "line": null
+    }
+  ]
+}

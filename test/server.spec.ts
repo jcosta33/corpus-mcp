@@ -83,7 +83,7 @@ async function connectClient(bin = stubBin): Promise<{
 
 beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), "suspec-mcp-server-"));
-  for (const dir of ["specs", "reviews", "tasks", "audits", "panels"]) {
+  for (const dir of ["specs", "tasks", "audits", "panels"]) {
     mkdirSync(artifactPath(dir), { recursive: true });
   }
   writeFileSync(
@@ -93,10 +93,6 @@ beforeEach(() => {
   writeFileSync(
     artifactPath("specs/b.md"),
     "---\ntype: spec\nid: SPEC-b\nstatus: ready\n---\n\n## Intent\n\nB.\n\n## Requirements\n",
-  );
-  writeFileSync(
-    artifactPath("reviews/review.md"),
-    "---\ntype: review\nid: REVIEW-a\nspec: SPEC-a\ntask: TASK-a\nreviewer: fixture-reviewer\n---\n\n## Requirement coverage\n",
   );
   writeFileSync(
     artifactPath("tasks/task.md"),
@@ -223,27 +219,25 @@ describe("suspec-mcp server", () => {
     }
   }, 15_000);
 
-  it("passes specPath for tasks and review companions, but keeps taskPath review-only", async () => {
-    const review = artifactPath("reviews/review.md");
+  it("passes specPath for task batches and deduplicates aliased task paths", async () => {
     const specPath = artifactPath("specs/a.md");
     const taskPath = artifactPath("tasks/task.md");
     const { client, close } = await connectClient();
     try {
       const result = (await client.callTool({
         name: "suspec_check",
-        arguments: { paths: [review], specPath, taskPath },
+        arguments: { paths: [taskPath], specPath },
       })) as { structuredContent: { ok: boolean; data: { level: string }[] } };
       expect(result.structuredContent.ok).toBe(true);
-      expect(result.structuredContent.data[0].level).toBe("clean");
       expect(invocations()).toEqual([
-        ["check", review, "--spec", specPath, "--task", taskPath, "--json"],
+        ["check", taskPath, "--spec", specPath, "--json"],
       ]);
 
-      const alias = artifactPath("reviews/review-alias.md");
-      symlinkSync(review, alias);
+      const alias = artifactPath("tasks/task-alias.md");
+      symlinkSync(taskPath, alias);
       const deduplicated = (await client.callTool({
         name: "suspec_check",
-        arguments: { paths: [review, review, alias], specPath, taskPath },
+        arguments: { paths: [taskPath, taskPath, alias], specPath },
       })) as { structuredContent: { ok: boolean; data: { level: string }[] } };
       expect(deduplicated.structuredContent.ok).toBe(true);
       expect(deduplicated.structuredContent.data).toHaveLength(1);
@@ -265,17 +259,6 @@ describe("suspec-mcp server", () => {
         "--json",
       ]);
 
-      const ambiguous = (await client.callTool({
-        name: "suspec_check",
-        arguments: {
-          paths: [review, artifactPath("specs/b.md")],
-          specPath,
-          taskPath,
-        },
-      })) as { isError?: boolean; content: { text: string }[] };
-      expect(ambiguous.isError).toBe(true);
-      expect(ambiguous.content[0].text).toMatch(/taskPath.*one review target/);
-      expect(invocations()).toHaveLength(3);
     } finally {
       await close();
     }
@@ -287,8 +270,7 @@ describe("suspec-mcp server", () => {
       const result = (await client.callTool({
         name: "suspec_check",
         arguments: {
-          paths: [artifactPath("reviews/review.md")],
-          specPath: artifactPath("specs/a.md"),
+          paths: [artifactPath("tasks/task.md")],
         },
       })) as {
         isError?: boolean;
@@ -302,7 +284,7 @@ describe("suspec-mcp server", () => {
       expect(result.isError).toBeFalsy();
       expect(result.structuredContent.ok).toBe(false);
       expect(result.structuredContent.data[0].message).toMatch(
-        /missing --task/,
+        /missing --spec/,
       );
       expect(result.structuredContent.note).toBeUndefined();
       expect(result.structuredContent.source.exitCode).toBe(2);
@@ -343,11 +325,10 @@ describe("suspec-mcp server", () => {
         { paths: [] },
         { paths: ["relative.md"] },
         { paths: [`${artifactPath("specs/a.md")}\u0000`] },
-        { paths: [artifactPath("reviews/review.md")], specPath: "relative.md" },
+        { paths: [artifactPath("tasks/task.md")], specPath: "relative.md" },
         {
-          paths: [artifactPath("reviews/review.md")],
-          specPath: artifactPath("specs/a.md"),
-          taskPath: `${artifactPath("tasks/task.md")}\u202e`,
+          paths: [artifactPath("tasks/task.md")],
+          specPath: `${artifactPath("specs/a.md")}\u202e`,
         },
       ];
       for (const args of invalid) {
@@ -411,7 +392,7 @@ describe("suspec-mcp server", () => {
           responseFormat: string;
         };
       };
-      expect(result.structuredContent.data.version).toBe("0.25.0");
+      expect(result.structuredContent.data.version).toBe("0.26.0");
       expect(result.structuredContent.responseFormat).toBe("detailed");
       expect(invocations()).toEqual([["check", "--contract", "--json"]]);
     } finally {

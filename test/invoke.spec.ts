@@ -100,10 +100,6 @@ function scratchEnv(bin: string): { env: SuspecEnv; cleanup: () => void } {
   const dir = mkdtempSync(join(tmpdir(), "suspec-mcp-invoke-"));
   writeFileSync(join(dir, "spec.md"), "---\ntype: spec\nid: SPEC-x\n---\n");
   writeFileSync(
-    join(dir, "review.md"),
-    "---\ntype: review\nid: REVIEW-x\nspec: SPEC-x\ntask: TASK-x\nreviewer: fixture-reviewer\n---\n",
-  );
-  writeFileSync(
     join(dir, "task.md"),
     "---\ntype: task\nid: TASK-x\nsource:\n  - SPEC-x\nscope: [AC-001]\n---\n",
   );
@@ -169,18 +165,18 @@ describe("invoke_suspec — the subprocess edge", () => {
     }
   });
 
-  it("passes the allow-listed companion flags (--spec/--task) through to check", async () => {
+  it("passes the allow-listed companion flag (--spec) through to check", async () => {
     const s = scratchEnv(stub);
     try {
       const r = await invoke_suspec(
         s.env,
         "check",
-        ["review.md"],
-        checkOptions({ "--spec": "spec.md", "--task": "task.md" }),
+        ["task.md"],
+        checkOptions({ "--spec": "spec.md" }),
       );
       expect(r.kind).toBe("ok");
       expect(r.invocation.command).toBe(
-        `${stub} check review.md --spec spec.md --task task.md --json`,
+        `${stub} check task.md --spec spec.md --json`,
       );
     } finally {
       s.cleanup();
@@ -227,8 +223,8 @@ describe("invoke_suspec — the subprocess edge", () => {
       copyFileSync(stub, spacedBin);
       chmodSync(spacedBin, 0o755);
       writeFileSync(
-        join(s.env.cwd, "review path.md"),
-        "---\ntype: review\nid: REVIEW-x\nspec: SPEC-x\ntask: TASK-x\nreviewer: fixture-reviewer\n---\n",
+        join(s.env.cwd, "task path.md"),
+        "---\ntype: task\nid: TASK-x\nsource:\n  - SPEC-x\nscope: [AC-001]\n---\n",
       );
       writeFileSync(
         join(s.env.cwd, "spec path.md"),
@@ -241,14 +237,13 @@ describe("invoke_suspec — the subprocess edge", () => {
       const r = await invoke_suspec(
         { ...s.env, bin: spacedBin },
         "check",
-        ["review path.md"],
+        ["task path.md"],
         checkOptions({
           "--spec": "spec path.md",
-          "--task": "task path.md",
         }),
       );
       expect(r.invocation.command).toBe(
-        `'${spacedBin}' check 'review path.md' --spec 'spec path.md' --task 'task path.md' --json`,
+        `'${spacedBin}' check 'task path.md' --spec 'spec path.md' --json`,
       );
     } finally {
       s.cleanup();
@@ -293,19 +288,18 @@ describe("invoke_suspec — the subprocess edge", () => {
   it('returns kind:"structured-error" when the CLI emits an error object (exit 2)', async () => {
     const s = scratchEnv(stub);
     try {
-      // the conditional-companion refusal: the review names a task, no --task handed
       const r = await invoke_suspec(
         s.env,
         "check",
-        ["review.md"],
-        checkOptions({ "--spec": "spec.md" }),
+        ["task.md"],
+        checkOptions(),
       );
       expect(r.kind).toBe("structured-error");
       expect(r.invocation.exitCode).toBe(2);
       if (r.kind === "structured-error") {
         const error = (r.data as { error: string; message: string }[])[0];
         expect(error.error).toBe("Usage");
-        expect(error.message).toMatch(/missing --task/);
+        expect(error.message).toMatch(/missing --spec/);
       }
     } finally {
       s.cleanup();

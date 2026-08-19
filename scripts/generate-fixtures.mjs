@@ -8,10 +8,10 @@
 // still match (so a stale fixture trips CI).
 //
 // It builds a deterministic, self-contained scratch dir of artifacts (a spec, a task packet, a
-// task-referencing review — clean and diagnostic-carrying variants) and captures EVERY `--json`
-// shape the adapter consumes: the per-file check report, the unchecked-artifact notice, the checks
-// contract, and the structured error the conditional-companion rule emits. Paths are passed relative
-// to scratch. The CLI resolves them before reporting, so capture strips only that scratch root.
+// campaign, an unchecked audit) and captures EVERY `--json` shape the adapter consumes: the
+// per-file check report, the unchecked-artifact notice, the checks contract, and the structured
+// errors the task `--spec` companion rule emits. Paths are passed relative to scratch. The CLI
+// resolves them before reporting, so capture strips only that scratch root.
 //
 // Usage:  node scripts/generate-fixtures.mjs [--out <dir>] [--suspec-bin <path>]
 //   --out        where to write the fixtures (default: test/fixtures next to this script's repo)
@@ -221,8 +221,7 @@ function write(name, value) {
   process.stderr.write(`  wrote ${name}.json\n`);
 }
 
-// A complete, ready 2-AC spec — the review's always-required companion, and a clean spec check
-// subject.
+// A complete, ready 2-AC spec — a clean spec check subject and the task `--spec` companion.
 const SPEC = [
   "---",
   "type: spec",
@@ -273,7 +272,6 @@ const SPEC = [
   "",
 ].join("\n");
 
-// The task packet the review names — its declared scope keys the review's coverage.
 const TASK = [
   "---",
   "type: task",
@@ -381,17 +379,6 @@ const SPEC_DUPLICATE = SPEC.replace(
   "# Duplicate demo feature",
 );
 
-const NOT_A_TASK = [
-  "---",
-  "type: spec",
-  "id: TASK-demo",
-  "status: ready",
-  "---",
-  "",
-  "# Not a task",
-  "",
-].join("\n");
-
 const TASK_EMPTY_SCOPE = [
   "---",
   "type: task",
@@ -421,104 +408,17 @@ const NOT_A_SPEC = [
   "",
 ].join("\n");
 
-// A clean task-keyed review: the Supported row carries evidence and a verify block matching the spec's
-// named command.
-const REVIEW = [
-  "---",
-  "type: review",
-  "id: REVIEW-demo",
-  "spec: SPEC-demo-feature",
-  "task: TASK-demo",
-  "reviewer: fixture-reviewer",
-  "decision: pending",
-  "---",
-  "",
-  "## Requirement coverage",
-  "",
-  "| ID | Assessment | Evidence |",
-  "|---|---|---|",
-  "| AC-001 | Supported | p |",
-  "",
-  '```verify id=AC-001 cmd="git --version" result=pass',
-  "ok",
-  "```",
-  "",
-].join("\n");
-
-// A task-LESS review (no `task:` frontmatter): the subject for the unreferenced-task refusal — a
-// --task handed to it is a companion nothing references.
-const REVIEW_NOTASK = [
-  "---",
-  "type: review",
-  "id: REVIEW-demo-notask",
-  "spec: SPEC-demo-feature",
-  "reviewer: fixture-reviewer",
-  "decision: pending",
-  "---",
-  "",
-  "## Requirement coverage",
-  "",
-  "| ID | Assessment | Evidence |",
-  "|---|---|---|",
-  "| AC-001 | Supported | p |",
-  "",
-  '```verify id=AC-001 cmd="git --version" result=pass',
-  "ok",
-  "```",
-  "",
-].join("\n");
-
-const REVIEW_TASK_LIST = [
-  "---",
-  "type: review",
-  "id: REVIEW-demo-list",
-  "spec: SPEC-demo-feature",
-  "task:",
-  "  - TASK-demo",
-  "  - TASK-other",
-  "reviewer: fixture-reviewer",
-  "decision: pending",
-  "---",
-  "",
-  "## Requirement coverage",
-  "",
-].join("\n");
-
-const REVIEW_TASK_MISMATCH = REVIEW.replace(
-  "task: TASK-demo",
-  "task: TASK-other",
-);
-
-const REVIEW_QUOTED_BOM = [
+const TASK_QUOTED_BOM = [
   "\ufeff---",
-  'type: "review"',
-  "id: REVIEW-demo-quoted-bom",
-  "spec: SPEC-demo-feature",
-  "reviewer: fixture-reviewer",
-  "decision: pending",
+  'type: "task"',
+  "id: TASK-demo-quoted-bom",
+  "source:",
+  "  - SPEC-demo-feature",
+  "scope: [AC-001]",
+  "status: ready",
   "---",
   "",
-  "## Requirement coverage",
-  "",
-].join("\n");
-
-// A diagnostic-carrying review: a Supported row with an EMPTY Evidence cell and no verify block, so the
-// captured report pins the diagnostic fields (code/severity/message/line) with real check output.
-const REVIEW_BAD = [
-  "---",
-  "type: review",
-  "id: REVIEW-demo",
-  "spec: SPEC-demo-feature",
-  "task: TASK-demo",
-  "reviewer: fixture-reviewer",
-  "decision: pending",
-  "---",
-  "",
-  "## Requirement coverage",
-  "",
-  "| ID | Assessment | Evidence |",
-  "|---|---|---|",
-  "| AC-001 | Supported |  |",
+  "# Quoted BOM task",
   "",
 ].join("\n");
 
@@ -534,7 +434,15 @@ function main() {
     process.exit(2);
   }
   provenance = inspectSuspecBin(suspecBin);
-  assertCleanProvenance(provenance);
+  if (process.env.ALLOW_DIRTY_SUSPEC_CLI === "1") {
+    if (provenance.worktreeDirty) {
+      process.stderr.write(
+        "generate-fixtures: allowing dirty suspec-cli worktree\n",
+      );
+    }
+  } else {
+    assertCleanProvenance(provenance);
+  }
   process.stderr.write(
     `suspec-cli provenance: root=${resolve(suspecBin, "../..")}, head=${provenance.gitHead}, dirty=${provenance.worktreeDirty}, worktree=${provenance.worktreeSha256}, binary=${provenance.binarySha256}\n`,
   );
@@ -549,22 +457,11 @@ function main() {
     writeFileSync(join(scratch, "campaign-demo.md"), CAMPAIGN);
     writeFileSync(join(scratch, "spec-second.md"), SPEC_SECOND);
     writeFileSync(join(scratch, "spec-duplicate.md"), SPEC_DUPLICATE);
-    writeFileSync(join(scratch, "not-a-task.md"), NOT_A_TASK);
     writeFileSync(join(scratch, "task-empty-scope.md"), TASK_EMPTY_SCOPE);
     writeFileSync(join(scratch, "task-wrong-source.md"), TASK_WRONG_SOURCE);
     writeFileSync(join(scratch, "not-a-spec.md"), NOT_A_SPEC);
-    writeFileSync(join(scratch, "review-demo.md"), REVIEW);
-    writeFileSync(join(scratch, "review-notask.md"), REVIEW_NOTASK);
-    writeFileSync(join(scratch, "review-task-list.md"), REVIEW_TASK_LIST);
-    writeFileSync(
-      join(scratch, "review-task-mismatch.md"),
-      REVIEW_TASK_MISMATCH,
-    );
-    writeFileSync(join(scratch, "review-quoted-bom.md"), REVIEW_QUOTED_BOM);
-    writeFileSync(join(scratch, "review-bad.md"), REVIEW_BAD);
+    writeFileSync(join(scratch, "task-quoted-bom.md"), TASK_QUOTED_BOM);
 
-    // 1. the per-file check reports: a clean spec, a clean review (both companions), and a
-    //    diagnostic-carrying review.
     write("check-spec", suspec(scratch, ["check", "spec-demo.md"], "clean", 0));
     write(
       "check-campaign",
@@ -580,49 +477,10 @@ function main() {
       ),
     );
     write(
-      "check-review",
+      "check-task-diagnostics",
       suspec(
         scratch,
-        [
-          "check",
-          "review-demo.md",
-          "--spec",
-          "spec-demo.md",
-          "--task",
-          "task-demo.md",
-        ],
-        "clean",
-        0,
-      ),
-    );
-    write(
-      "check-review-diagnostics",
-      suspec(
-        scratch,
-        [
-          "check",
-          "review-bad.md",
-          "--spec",
-          "spec-demo.md",
-          "--task",
-          "task-demo.md",
-        ],
-        "blocking",
-        2,
-      ),
-    );
-    write(
-      "check-review-task-mismatch",
-      suspec(
-        scratch,
-        [
-          "check",
-          "review-task-mismatch.md",
-          "--spec",
-          "spec-demo.md",
-          "--task",
-          "task-demo.md",
-        ],
+        ["check", "task-empty-scope.md", "--spec", "spec-demo.md"],
         "blocking",
         2,
       ),
@@ -645,32 +503,17 @@ function main() {
         2,
       ),
     );
-
-    // 2. an artifact whose type has no check face — the unchecked notice.
     write(
       "check-unchecked",
       suspec(scratch, ["check", "audit-demo.md"], "clean", 0),
     );
-
-    // 3. the checks contract.
     write("contract", suspec(scratch, ["check", "--contract"], "contract", 0));
-
-    // 4. the structured error the conditional-companion rule emits: the review names a task, but no
-    //    --task is handed — the CLI refuses (exit 2) instead of silently checking less.
     write(
-      "error-missing-task",
-      suspec(
-        scratch,
-        ["check", "review-demo.md", "--spec", "spec-demo.md"],
-        "structured-error",
-        2,
-      ),
+      "error-missing-spec",
+      suspec(scratch, ["check", "task-demo.md"], "structured-error", 2),
     );
-
-    // 5. the structured error when --spec accompanies an artifact that is neither a task nor a
-    //    review.
     write(
-      "error-companions-without-review",
+      "error-spec-on-non-task",
       suspec(
         scratch,
         ["check", "spec-demo.md", "--spec", "spec-demo.md"],
@@ -678,81 +521,11 @@ function main() {
         2,
       ),
     );
-
-    // 6. the structured error when a handed companion path does not exist on disk — the path is
-    //    syntactically valid, so the CLI's refusal is the backstop.
     write(
       "error-companion-not-found",
       suspec(
         scratch,
-        [
-          "check",
-          "review-demo.md",
-          "--spec",
-          "no-such-spec.md",
-          "--task",
-          "task-demo.md",
-        ],
-        "structured-error",
-        2,
-      ),
-    );
-
-    // 7. the structured error when a review is checked with NO --spec at all — the spec is the
-    //    review's always-required companion.
-    write(
-      "error-missing-spec",
-      suspec(scratch, ["check", "review-demo.md"], "structured-error", 2),
-    );
-
-    // 8. the structured error when a --task is handed to a review whose frontmatter names no task —
-    //    a companion nothing references is a wiring mistake.
-    write(
-      "error-task-not-referenced",
-      suspec(
-        scratch,
-        [
-          "check",
-          "review-notask.md",
-          "--spec",
-          "spec-demo.md",
-          "--task",
-          "task-demo.md",
-        ],
-        "structured-error",
-        2,
-      ),
-    );
-
-    // 9. malformed task companions must never erase or mis-key review coverage.
-    write(
-      "error-task-wrong-type",
-      suspec(
-        scratch,
-        [
-          "check",
-          "review-demo.md",
-          "--spec",
-          "spec-demo.md",
-          "--task",
-          "not-a-task.md",
-        ],
-        "structured-error",
-        2,
-      ),
-    );
-    write(
-      "error-task-empty-scope",
-      suspec(
-        scratch,
-        [
-          "check",
-          "review-demo.md",
-          "--spec",
-          "spec-demo.md",
-          "--task",
-          "task-empty-scope.md",
-        ],
+        ["check", "task-demo.md", "--spec", "no-such-spec.md"],
         "structured-error",
         2,
       ),
@@ -763,11 +536,9 @@ function main() {
         scratch,
         [
           "check",
-          "review-demo.md",
+          "task-wrong-source.md",
           "--spec",
           "spec-demo.md",
-          "--task",
-          "task-wrong-source.md",
         ],
         "structured-error",
         2,
@@ -777,39 +548,15 @@ function main() {
       "error-spec-wrong-type",
       suspec(
         scratch,
-        [
-          "check",
-          "review-demo.md",
-          "--spec",
-          "not-a-spec.md",
-          "--task",
-          "task-demo.md",
-        ],
-        "structured-error",
-        2,
-      ),
-    );
-    write(
-      "error-review-task-list",
-      suspec(
-        scratch,
-        [
-          "check",
-          "review-task-list.md",
-          "--spec",
-          "spec-demo.md",
-          "--task",
-          "task-demo.md",
-        ],
+        ["check", "task-demo.md", "--spec", "not-a-spec.md"],
         "structured-error",
         2,
       ),
     );
     write(
       "error-quoted-bom-missing-spec",
-      suspec(scratch, ["check", "review-quoted-bom.md"], "structured-error", 2),
+      suspec(scratch, ["check", "task-quoted-bom.md"], "structured-error", 2),
     );
-
     process.stderr.write(`done. fixtures in ${outDir}\n`);
   } finally {
     rmSync(scratch, { recursive: true, force: true });

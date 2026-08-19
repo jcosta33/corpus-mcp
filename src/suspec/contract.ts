@@ -7,7 +7,7 @@
 
 import { z } from "zod";
 
-export const SUPPORTED_CONTRACT_VERSION = "0.25.0" as const;
+export const SUPPORTED_CONTRACT_VERSION = "0.26.0" as const;
 
 export const SUPPORTED_CHECKS = [
   { id: "C001", name: "unique-ids", severity: "hard-error" },
@@ -19,23 +19,17 @@ export const SUPPORTED_CHECKS = [
   { id: "C009", name: "broken-source-link", severity: "hard-error" },
   { id: "C010", name: "preserves-refs-resolve", severity: "hard-error" },
   { id: "C011", name: "waves-present", severity: "warning" },
-  { id: "C012", name: "coverage", severity: "warning" },
-  { id: "C013", name: "verify-evidence-binding", severity: "warning" },
   { id: "C015", name: "citation-resolves", severity: "warning" },
-  { id: "C016", name: "supported-needs-evidence", severity: "hard-error" },
   {
     id: "C019",
     name: "malformed-requirement-heading",
     severity: "warning",
   },
-  { id: "C020", name: "unresolvable-ref", severity: "hard-error" },
   { id: "C021", name: "intent-present", severity: "hard-error" },
   { id: "C022", name: "task-shape", severity: "hard-error" },
   { id: "C023", name: "task-evidence", severity: "hard-error" },
   { id: "C024", name: "closed-task-resolved", severity: "hard-error" },
   { id: "C025", name: "spec-shape", severity: "hard-error" },
-  { id: "C026", name: "evidence-receipt-resolves", severity: "hard-error" },
-  { id: "C027", name: "review-spec-ref", severity: "hard-error" },
   { id: "C028", name: "requirement-shape", severity: "hard-error" },
   { id: "C029", name: "campaign-shape", severity: "hard-error" },
   { id: "C030", name: "campaign-authority", severity: "hard-error" },
@@ -49,8 +43,6 @@ const SUPPORTED_CHECK_BY_ID = new Map<
   string,
   (typeof SUPPORTED_CHECKS)[number]
 >(SUPPORTED_CHECKS.map((check) => [check.id, check]));
-const C013_CMD_MISMATCH =
-  /^coverage row .+'s verify block records a cmd that does not match the requirement's named Verify command$/;
 
 const CheckDiagnostic = z
   .object({
@@ -70,12 +62,7 @@ const CheckDiagnostic = z
       });
       return;
     }
-    const severityAllowed =
-      diagnostic.severity === expected.severity ||
-      (diagnostic.code === "C013" &&
-        diagnostic.severity === "hard-error" &&
-        C013_CMD_MISMATCH.test(diagnostic.message));
-    if (!severityAllowed) {
+    if (diagnostic.severity !== expected.severity) {
       ctx.addIssue({
         code: "custom",
         message: `diagnostic ${diagnostic.code} must have severity ${expected.severity}`,
@@ -85,7 +72,7 @@ const CheckDiagnostic = z
   });
 export const CheckReportSchema = z
   .object({
-    type: z.enum(["spec", "task", "review", "change-plan", "campaign"]),
+    type: z.enum(["spec", "task", "change-plan", "campaign"]),
     level: z.enum(["clean", "warning", "blocking"]),
     path: z.string(),
     diagnostics: z.array(CheckDiagnostic),
@@ -143,7 +130,7 @@ export const UncheckedArtifactSchema = z
   });
 
 // What `suspec check <artifact> --json` can emit on a success exit: a check report (spec, task,
-// review, change-plan, campaign) or the unchecked notice.
+// change-plan, campaign) or the unchecked notice.
 export const CheckFileSchema = z.union([
   CheckReportSchema,
   UncheckedArtifactSchema,
@@ -260,8 +247,8 @@ export const ContractSchema = z
   })
   .passthrough();
 
-// The CLI's structured-error stdout body (`{error, message}` + exit 2) — e.g. a review checked without
-// the companion its frontmatter requires.
+// The CLI's structured-error stdout body (`{error, message}` + exit 2) — e.g. a task checked without
+// the `--spec` companion it requires.
 export const SuspecErrorSchema = z
   .object({ error: z.string(), message: z.string() })
   .passthrough();

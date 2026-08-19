@@ -1,17 +1,12 @@
 // The Suspec MCP tool surface:
 //   • suspec_check — run one CLI process over an ordered artifact path set. Tasks carry one explicit
-//     spec companion; a lone review may also carry a task companion.
+//     spec companion.
 //   • suspec_get_checks — the checks contract itself (`suspec check --contract`).
 
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { isAbsolute } from "node:path";
-
-import {
-  distinct_primary_paths,
-  type SuspecEnv,
-  invoke_suspec,
-} from "./suspec/invoke.ts";
+import { type SuspecEnv, invoke_suspec } from "./suspec/invoke.ts";
 import { invoke_supported_contract } from "./suspec/compatibility.ts";
 import { respond, tool_error, ENVELOPE_OUTPUT_SHAPE } from "./envelope.ts";
 import { slice_check_results, slice_contract } from "./slices.ts";
@@ -36,7 +31,6 @@ const responseFormatInput = {
       "concise (default) returns the relevant slice; detailed returns the verbatim CLI payload",
     ),
 };
-
 type Format = "concise" | "detailed";
 const resolve_format = (value: Format | undefined): Format =>
   value ?? "concise";
@@ -49,7 +43,7 @@ function is_full_path(value: string): boolean {
   );
 }
 
-function path_error(role: "artifact" | "spec" | "task") {
+function path_error(role: "artifact" | "spec") {
   return tool_error(
     `${role} path must be a full absolute path with no control, format, or line-separator characters`,
   );
@@ -61,10 +55,10 @@ export function register_tools(server: McpServer, ctx: Ctx): void {
     {
       title: "Check Suspec artifacts",
       description:
-        "Validate a spec, task, review, or change plan after authoring or before finalizing it. " +
+        "Validate a spec, task, change plan, or campaign after authoring or before finalizing it. " +
         "Run one `suspec check` process over an ordered non-empty array of absolute artifact paths. " +
         "Batching enables cross-file checks such as C002. Task paths require one absolute specPath. " +
-        "A review must be the only primary path and may also receive taskPath. Returns CLI reports in order.",
+        "Returns CLI reports in order.",
       inputSchema: {
         paths: z
           .array(z.string())
@@ -73,42 +67,24 @@ export function register_tools(server: McpServer, ctx: Ctx): void {
         specPath: z
           .string()
           .optional()
-          .describe("absolute source-spec path for task paths or one review"),
-        taskPath: z
-          .string()
-          .optional()
-          .describe("absolute task-packet path for a single review target"),
+          .describe("absolute source-spec path for task paths"),
         ...responseFormatInput,
       },
       outputSchema: ENVELOPE_OUTPUT_SHAPE,
       annotations: READ_ONLY,
     },
-    async ({ paths, specPath, taskPath, responseFormat }) => {
+    async ({ paths, specPath, responseFormat }) => {
       for (const path of paths) {
         if (!is_full_path(path)) {
           return path_error("artifact");
         }
       }
       const flags: Record<string, string> = {};
-      if (
-        taskPath !== undefined &&
-        distinct_primary_paths(paths, ctx.env.cwd).length !== 1
-      ) {
-        return tool_error(
-          "taskPath is valid only when paths resolves to one review target",
-        );
-      }
       if (specPath !== undefined) {
         if (!is_full_path(specPath)) {
           return path_error("spec");
         }
         flags["--spec"] = specPath;
-      }
-      if (taskPath !== undefined) {
-        if (!is_full_path(taskPath)) {
-          return path_error("task");
-        }
-        flags["--task"] = taskPath;
       }
       const format = resolve_format(responseFormat);
       return respond(

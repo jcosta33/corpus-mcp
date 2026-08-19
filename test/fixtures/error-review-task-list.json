@@ -1,4 +1,0 @@
-{
-  "error": "ParseFailure",
-  "message": "frontmatter `task:` must be a scalar"
-}

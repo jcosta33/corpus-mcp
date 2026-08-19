@@ -42,23 +42,16 @@ const FIXTURES = [
   "check-spec",
   "check-campaign",
   "check-task",
-  "check-review",
-  "check-review-diagnostics",
-  "check-review-task-mismatch",
+  "check-task-diagnostics",
   "check-multiple",
   "check-duplicate-id",
   "check-unchecked",
   "contract",
-  "error-missing-task",
-  "error-companions-without-review",
-  "error-companion-not-found",
   "error-missing-spec",
-  "error-task-not-referenced",
-  "error-task-wrong-type",
-  "error-task-empty-scope",
+  "error-spec-on-non-task",
+  "error-companion-not-found",
   "error-task-wrong-source",
   "error-spec-wrong-type",
-  "error-review-task-list",
   "error-quoted-bom-missing-spec",
   "provenance",
 ];
@@ -119,7 +112,7 @@ describe("fixture capture exit assertions", () => {
       2,
       JSON.stringify({ error: "Usage", message: "bad input" }),
     ],
-    ["json", "contract", 0, JSON.stringify({ version: "0.25.0", checks: [] })],
+    ["json", "contract", 0, JSON.stringify({ version: "0.26.0", checks: [] })],
     ["jsonl", "clean", 0, JSON.stringify(report("clean", "clean.md"))],
     [
       "jsonl",
@@ -198,7 +191,11 @@ describe("the contract fixtures stay generated from the real binary", () => {
         await execFileAsync(
           process.execPath,
           [generator, "--out", tmp, "--suspec-bin", suspecBin],
-          { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
+          {
+            encoding: "utf8",
+            maxBuffer: 64 * 1024 * 1024,
+            env: { ...process.env, ALLOW_DIRTY_SUSPEC_CLI: "1" },
+          },
         );
 
         for (const name of FIXTURES) {

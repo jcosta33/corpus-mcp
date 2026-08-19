@@ -3,8 +3,8 @@
 // surface. Records every invocation's argv to STUB_LOG (so tests can assert which subprocesses ran /
 // that no mutation flag was ever passed) and emits JSON to stdout mirroring the real CLI's --json
 // shapes. Like the real CLI, it reads the checked file itself: the kind sniff comes from the file's
-// frontmatter `type:`. Tasks require --spec. Reviews require --spec and require --task iff they name
-// a `task:`. Companions must exist on disk, so the adapter's plumbing is exercised end to end.
+// frontmatter `type:`. Tasks require --spec. Companions must exist on disk, so the adapter's plumbing
+// is exercised end to end.
 import { appendFileSync, existsSync, readFileSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 
@@ -105,12 +105,14 @@ if (argv.includes("--contract")) {
   process.exit(0);
 }
 
-// Positional extraction mirroring the real CLI's flag parser: `--spec`/`--task` consume a value.
-const VALUED = new Set(["--spec", "--task"]);
+const VALUED = new Set(["--spec"]);
 const positionals = [];
 for (let i = 1; i < argv.length; i += 1) {
   const token = argv[i];
   if (token.startsWith("--")) {
+    if (token !== "--json" && token !== "--contract" && !VALUED.has(token)) {
+      fail(`unknown option: ${token}`);
+    }
     if (VALUED.has(token)) {
       i += 1;
     }
@@ -147,26 +149,22 @@ const artifacts = distinctPositionals.map((file) => {
   const head = frontmatter(source);
   return { file, source, head, type: scalar(head, "type") ?? null };
 });
-const reviews = artifacts.filter((artifact) => artifact.type === "review");
+const CHECKED = new Set(["spec", "task", "change-plan", "campaign"]);
+const UNCHECKED = new Set(["inventory", "audit", "research", "panel"]);
+for (const artifact of artifacts) {
+  if (
+    artifact.type !== null &&
+    !CHECKED.has(artifact.type) &&
+    !UNCHECKED.has(artifact.type)
+  ) {
+    fail(
+      `artifact \`${artifact.file}\` declares unknown type \`${artifact.type}\``,
+    );
+  }
+}
 const tasks = artifacts.filter((artifact) => artifact.type === "task");
-if (reviews.length > 0 && artifacts.length > 1) {
-  fail(
-    "a review packet is checked alone — usage: suspec check <review-path> --spec <spec-path> [--task <task-path>]",
-  );
-}
-const { file, head, type } = artifacts[0];
-
-if (reviews.length === 0 && flag("--task") !== undefined) {
-  fail(
-    "--task accompanies one review packet — the named artifacts carry no review",
-  );
-}
-if (
-  reviews.length === 0 &&
-  tasks.length === 0 &&
-  flag("--spec") !== undefined
-) {
-  fail("--spec accompanies task paths or one review packet");
+if (tasks.length === 0 && flag("--spec") !== undefined) {
+  fail("--spec accompanies task paths");
 }
 if (tasks.length > 0 && flag("--spec") === undefined) {
   fail(
@@ -177,46 +175,6 @@ if (tasks.length > 0) {
   const spec = flag("--spec");
   if (!existsSync(spec)) fail(`--spec file not found: ${spec}`);
   const specHead = frontmatter(readFileSync(spec, "utf8"));
-  const specId = scalar(specHead, "id");
-  for (const task of tasks) {
-    if (!list(task.head, "source").includes(specId)) {
-      fail(
-        `task \`${task.file}\` does not name handed spec \`${specId ?? "no id"}\` in \`source:\``,
-      );
-    }
-  }
-}
-
-if (type === "review") {
-  // The companion rules, mirrored from the real CLI (its messages verbatim).
-  if (flag("--spec") === undefined) {
-    fail(
-      "a review packet needs its source spec: missing --spec — usage: suspec check <review-path> --spec <spec-path> [--task <task-path>]",
-    );
-  }
-  // A handed companion must exist on disk — checked before the task-reference rules, like the CLI.
-  for (const name of ["--spec", "--task"]) {
-    const companion = flag(name);
-    if (companion !== undefined && !existsSync(companion)) {
-      fail(`${name} file not found: ${companion}`);
-    }
-  }
-  if (isBlockList(head, "task")) {
-    fail("frontmatter `task:` must be a scalar");
-  }
-  const taskRef = scalar(head, "task");
-  const task = flag("--task");
-  if (taskRef !== undefined && task === undefined) {
-    fail(
-      `the review names task \`${taskRef}\`: missing --task — usage: suspec check <review-path> --spec <spec-path> --task <task-path>`,
-    );
-  }
-  if (taskRef === undefined && task !== undefined) {
-    fail(
-      "--task names a packet but the review references no task (no `task:` frontmatter) — a companion nothing references is a wiring mistake",
-    );
-  }
-  const specHead = frontmatter(readFileSync(flag("--spec"), "utf8"));
   if (isBlockList(specHead, "type")) {
     fail("--spec `type:` must be a single scalar, not a list");
   }
@@ -227,61 +185,22 @@ if (type === "review") {
   if (specType !== undefined && specType !== "spec") {
     fail("--spec companion fails deterministic checks: C021, C025, C008");
   }
-  if (task !== undefined) {
-    const taskHead = frontmatter(readFileSync(task, "utf8"));
-    if (isBlockList(taskHead, "type")) {
-      fail("--task `type:` must be a single scalar, not a list");
-    }
-    if (isBlockList(taskHead, "id")) {
-      fail("--task `id:` must be a single scalar, not a list");
-    }
-    const taskType = scalar(taskHead, "type");
-    if (taskType !== "task") {
-      fail("--task companion fails deterministic checks: C022");
-    }
-    const taskId = scalar(taskHead, "id");
-    if (taskRef !== taskId) {
-      const handed =
-        taskId === undefined
-          ? "a packet with no id"
-          : `the packet for \`${taskId}\``;
-      emit({
-        type: "review",
-        path: file,
-        level: "blocking",
-        diagnostics: [
-          {
-            code: "C020",
-            severity: "hard-error",
-            message: `review names task \`${taskRef}\` but was checked against ${handed} — coverage/evidence cannot be reconciled (unresolvable-ref)`,
-            line: null,
-          },
-        ],
-      });
-      process.exit(2);
-    }
-    if (
-      !list(taskHead, "scope").some((id) => /\b[A-Z][A-Z0-9]*-\d+\b/.test(id))
-    ) {
-      fail("--task companion fails deterministic checks: C022");
-    }
-    const specId = scalar(specHead, "id");
-    if (specId === undefined) {
-      fail("--spec companion must name its artifact in `id:`");
-    }
-    if (!list(taskHead, "source").includes(specId)) {
+  const specId = scalar(specHead, "id");
+  if (specId === undefined) {
+    fail("--spec companion must name its artifact in `id:`");
+  }
+  for (const task of tasks) {
+    if (!list(task.head, "source").includes(specId)) {
       fail(
-        `--task companion does not name handed spec \`${specId}\` in \`source:\``,
+        `task \`${task.file}\` does not name handed spec \`${specId}\` in \`source:\``,
       );
     }
   }
-  emit({ type: "review", path: file, level: "clean", diagnostics: [] });
-  process.exit(0);
 }
 
 let status = 0;
 for (const artifact of artifacts) {
-  if (["audit", "inventory", "research", "panel"].includes(artifact.type)) {
+  if (UNCHECKED.has(artifact.type)) {
     emit({
       level: "clean",
       path: artifact.file,

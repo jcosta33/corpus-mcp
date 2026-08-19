@@ -1,6 +1,6 @@
 // The ONE subprocess edge. suspec-mcp never imports suspec-cli's internals — it shells out to the
 // `suspec` CLI's `--json` contract with a FIXED argv array (never a shell string, never a client-injected
-// flag). MCP exposes one CLI verb: `check`, plus the companion flags (`--spec`/`--task`, each value a
+// flag). MCP exposes one CLI verb: `check`, plus the companion flag (`--spec`, value a
 // full path already validated by the tool boundary) and the bare `--contract`. `--json` is always
 // appended. The CLI's separate setup command can never cross this boundary.
 
@@ -24,9 +24,9 @@ export type SuspecEnv = Readonly<{
 // The one verb MCP exposes — anything else is refused before a subprocess ever spawns.
 const ALLOWED_VERBS = new Set(["check"]);
 
-// The VALUED flags suspec-mcp may pass: review companions whose full paths the tool already validated.
+// The VALUED flags suspec-mcp may pass: the task `--spec` companion whose full path the tool already validated.
 // A programming slip that tried to pass mutation or dispatch flags throws before the subprocess.
-const ALLOWED_FLAGS = new Set(["--spec", "--task"]);
+const ALLOWED_FLAGS = new Set(["--spec"]);
 
 // The BARE (valueless) flags: `--contract` selects the checks-contract dump.
 const ALLOWED_BARE_FLAGS = new Set(["--contract"]);
@@ -37,7 +37,7 @@ export type SuspecInvocation = Readonly<{
 }>;
 
 // The CLI emits one JSON object to stdout in BOTH the success case and the structured-error case
-// (e.g. `{"error":"Usage","message":"… missing --task …"}` with exit 2). So a parsed object with an
+// (e.g. `{"error":"Usage","message":"… missing --spec …"}` with exit 2). So a parsed object with an
 // `error` field is a *structured* failure (surfaced to the agent as a fact), distinct from a launch
 // failure (binary missing / non-JSON output), which is an adapter error.
 export type SuspecResult =
@@ -156,7 +156,7 @@ export function invoke_suspec(
     }
     args.push(flag);
   }
-  // The companion flags (`--spec`/`--task`), each full path already validated by the caller. The
+  // The companion flag (`--spec`), a full path already validated by the caller. The
   // flag NAME is allow-list-checked here as defense in depth — a slip that tried to pass anything
   // else would throw, never silently reach the CLI.
   for (const [flag, value] of Object.entries(opts.flags ?? {})) {

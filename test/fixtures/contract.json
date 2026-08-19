@@ -1,5 +1,5 @@
 {
-  "version": "0.25.0",
+  "version": "0.26.0",
   "checks": [
     {
       "id": "C001",
@@ -47,34 +47,14 @@
       "severity": "warning"
     },
     {
-      "id": "C012",
-      "name": "coverage",
-      "severity": "warning"
-    },
-    {
-      "id": "C013",
-      "name": "verify-evidence-binding",
-      "severity": "warning"
-    },
-    {
       "id": "C015",
       "name": "citation-resolves",
       "severity": "warning"
     },
     {
-      "id": "C016",
-      "name": "supported-needs-evidence",
-      "severity": "hard-error"
-    },
-    {
       "id": "C019",
       "name": "malformed-requirement-heading",
       "severity": "warning"
-    },
-    {
-      "id": "C020",
-      "name": "unresolvable-ref",
-      "severity": "hard-error"
     },
     {
       "id": "C021",
@@ -99,16 +79,6 @@
     {
       "id": "C025",
       "name": "spec-shape",
-      "severity": "hard-error"
-    },
-    {
-      "id": "C026",
-      "name": "evidence-receipt-resolves",
-      "severity": "hard-error"
-    },
-    {
-      "id": "C027",
-      "name": "review-spec-ref",
       "severity": "hard-error"
     },
     {

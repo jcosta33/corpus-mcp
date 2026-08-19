@@ -17,11 +17,11 @@ describe("build_envelope", () => {
 
   it("passes the CLI data through verbatim (including the CLI's own recorded level)", () => {
     const env = build_envelope(
-      okResult({ level: "blocking", diagnostics: [{ code: "C016" }] }),
+      okResult({ level: "blocking", diagnostics: [{ code: "C021" }] }),
     );
     expect(env.data).toEqual({
       level: "blocking",
-      diagnostics: [{ code: "C016" }],
+      diagnostics: [{ code: "C021" }],
     });
   });
 
@@ -45,7 +45,7 @@ describe("build_envelope", () => {
       data: [{
         error: "Usage",
         message:
-          "the review names task `TASK-x`: missing --task — usage: suspec check <review-path> --spec <spec-path> --task <task-path>",
+          "task checks need their source spec: missing --spec — usage: suspec check <task-path> [<task-path>...] --spec <spec-path>",
       }],
     });
     expect(env.ok).toBe(false);
@@ -53,7 +53,7 @@ describe("build_envelope", () => {
     expect(env.data).toEqual([{
       error: "Usage",
       message:
-        "the review names task `TASK-x`: missing --task — usage: suspec check <review-path> --spec <spec-path> --task <task-path>",
+        "task checks need their source spec: missing --spec — usage: suspec check <task-path> [<task-path>...] --spec <spec-path>",
     }]);
   });
 
