@@ -18,8 +18,8 @@ selects behavior.
 | `taskPath`       | optional absolute task companion for one review |
 | `responseFormat` | `concise` or `detailed`                         |
 
-Spec, task, change-plan, campaign, and review inputs receive their CLI checks. Inventory, audit, and
-research return `checked: false`. Missing and unknown types are rejected.
+Spec, task, change-plan, campaign, and review inputs receive their CLI checks. Inventory, audit,
+research, and panel return `checked: false`. Missing and unknown types are rejected.
 
 One invocation preserves cross-file checks such as C002. Task paths share one `specPath`; every task
 must name that spec. A review is the only primary when `taskPath` is present. Invalid companion

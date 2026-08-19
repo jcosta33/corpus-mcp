@@ -83,7 +83,7 @@ async function connectClient(bin = stubBin): Promise<{
 
 beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), "suspec-mcp-server-"));
-  for (const dir of ["specs", "reviews", "tasks", "audits"]) {
+  for (const dir of ["specs", "reviews", "tasks", "audits", "panels"]) {
     mkdirSync(artifactPath(dir), { recursive: true });
   }
   writeFileSync(
@@ -109,6 +109,10 @@ beforeEach(() => {
   writeFileSync(
     artifactPath("audits/audit.md"),
     "---\ntype: audit\nid: AUDIT-a\n---\n",
+  );
+  writeFileSync(
+    artifactPath("panels/panel.md"),
+    "---\ntype: panel\nid: PANEL-a\n---\n",
   );
   logPath = `${root}.log`;
   process.env.STUB_LOG = logPath;
@@ -307,25 +311,30 @@ describe("suspec-mcp server", () => {
     }
   });
 
-  it("keeps recognized unchecked artifacts explicit in concise output", async () => {
-    const { client, close } = await connectClient();
-    try {
-      const result = (await client.callTool({
-        name: "suspec_check",
-        arguments: { paths: [artifactPath("audits/audit.md")] },
-      })) as { structuredContent: { data: unknown } };
-      expect(result.structuredContent.data).toEqual([
-        {
-          level: "clean",
-          path: artifactPath("audits/audit.md"),
-          type: "audit",
-          checked: false,
-        },
-      ]);
-    } finally {
-      await close();
-    }
-  });
+  it.each(["audit", "panel"] as const)(
+    "keeps recognized unchecked %s artifacts explicit in concise output",
+    async (artifactType) => {
+      const { client, close } = await connectClient();
+      const relative =
+        artifactType === "audit" ? "audits/audit.md" : "panels/panel.md";
+      try {
+        const result = (await client.callTool({
+          name: "suspec_check",
+          arguments: { paths: [artifactPath(relative)] },
+        })) as { structuredContent: { data: unknown } };
+        expect(result.structuredContent.data).toEqual([
+          {
+            level: "clean",
+            path: artifactPath(relative),
+            type: artifactType,
+            checked: false,
+          },
+        ]);
+      } finally {
+        await close();
+      }
+    },
+  );
 
   it("rejects empty, relative, unsafe, and ambiguous companion paths before checking", async () => {
     const { client, close } = await connectClient();

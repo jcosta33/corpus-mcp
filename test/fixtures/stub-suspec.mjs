@@ -281,7 +281,7 @@ if (type === "review") {
 
 let status = 0;
 for (const artifact of artifacts) {
-  if (["audit", "inventory", "research"].includes(artifact.type)) {
+  if (["audit", "inventory", "research", "panel"].includes(artifact.type)) {
     emit({
       level: "clean",
       path: artifact.file,

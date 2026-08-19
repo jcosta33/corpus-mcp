@@ -169,8 +169,8 @@ describe("the contract matches the real --json shapes (captured fixtures)", () =
     }
   });
 
-  it("accepts only the three recognized unchecked artifact types", () => {
-    for (const type of ["inventory", "audit", "research"]) {
+  it("accepts only the four recognized unchecked artifact types", () => {
+    for (const type of ["inventory", "audit", "research", "panel"]) {
       expect(
         UncheckedArtifactSchema.safeParse({
           level: "clean",
