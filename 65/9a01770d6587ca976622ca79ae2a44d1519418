@@ -1,0 +1,22 @@
+README.md
+  h_1228e573df1f42 21-22
+src/suspec/contract.ts
+  h_1228e573df1f42 131
+test/contract.spec.ts
+  h_1228e573df1f42 172-173
+test/fixtures/stub-suspec.mjs
+  h_1228e573df1f42 284
+test/server.spec.ts
+  h_1228e573df1f42 86,113-116,314-337
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "659a01770d6587ca976622ca79ae2a44d1519418",
+  "prompts": {},
+  "humans": {
+    "h_1228e573df1f42": {
+      "author": "José Costa <j.costa.3394@gmail.com>"
+    }
+  }
+}
