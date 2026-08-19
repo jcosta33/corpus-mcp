@@ -128,7 +128,7 @@ export const UncheckedArtifactSchema = z
   .object({
     level: z.literal("clean"),
     path: z.string(),
-    type: z.enum(["inventory", "audit", "research"]),
+    type: z.enum(["inventory", "audit", "research", "panel"]),
     checked: z.literal(false),
   })
   .passthrough()
