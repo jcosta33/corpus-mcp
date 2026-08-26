@@ -12,10 +12,6 @@ on:
         description: suspec ref for an integration snapshot
         required: false
         default: main
-      skills_ref:
-        description: suspec-skills ref for an integration snapshot
-        required: false
-        default: main
       cli_ref:
         description: suspec-cli ref for an integration snapshot
         required: false
@@ -82,7 +78,6 @@ jobs:
     steps:
       - { name: suspec-mcp, uses: actions/checkout@v4, with: { path: family/suspec-mcp } }
       - { name: suspec, uses: actions/checkout@v4, with: { repository: jcosta33/suspec, ref: "${{ inputs.canon_ref || 'main' }}", path: family/suspec } }
-      - { name: suspec-skills, uses: actions/checkout@v4, with: { repository: jcosta33/suspec-skills, ref: "${{ inputs.skills_ref || 'main' }}", path: family/suspec-skills } }
       - { name: suspec-cli, uses: actions/checkout@v4, with: { repository: jcosta33/suspec-cli, ref: "${{ inputs.cli_ref || 'main' }}", path: family/suspec-cli } }
 
       - name: Method gates

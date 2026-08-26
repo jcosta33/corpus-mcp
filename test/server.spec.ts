@@ -83,7 +83,7 @@ async function connectClient(bin = stubBin): Promise<{
 
 beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), "suspec-mcp-server-"));
-  for (const dir of ["specs", "tasks", "audits", "panels"]) {
+  for (const dir of ["specs", "tasks", "audits", "researches"]) {
     mkdirSync(artifactPath(dir), { recursive: true });
   }
   writeFileSync(
@@ -107,8 +107,8 @@ beforeEach(() => {
     "---\ntype: audit\nid: AUDIT-a\n---\n",
   );
   writeFileSync(
-    artifactPath("panels/panel.md"),
-    "---\ntype: panel\nid: PANEL-a\n---\n",
+    artifactPath("researches/research.md"),
+    "---\ntype: research\nid: RESEARCH-a\n---\n",
   );
   logPath = `${root}.log`;
   process.env.STUB_LOG = logPath;
@@ -293,12 +293,12 @@ describe("suspec-mcp server", () => {
     }
   });
 
-  it.each(["audit", "panel"] as const)(
+  it.each(["audit", "research"] as const)(
     "keeps recognized unchecked %s artifacts explicit in concise output",
     async (artifactType) => {
       const { client, close } = await connectClient();
       const relative =
-        artifactType === "audit" ? "audits/audit.md" : "panels/panel.md";
+        artifactType === "audit" ? "audits/audit.md" : "researches/research.md";
       try {
         const result = (await client.callTool({
           name: "suspec_check",
@@ -392,7 +392,7 @@ describe("suspec-mcp server", () => {
           responseFormat: string;
         };
       };
-      expect(result.structuredContent.data.version).toBe("0.26.0");
+      expect(result.structuredContent.data.version).toBe("0.27.0");
       expect(result.structuredContent.responseFormat).toBe("detailed");
       expect(invocations()).toEqual([["check", "--contract", "--json"]]);
     } finally {

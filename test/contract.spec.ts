@@ -126,7 +126,7 @@ describe("the contract matches the real --json shapes (captured fixtures)", () =
   });
 
   it("accepts only the four recognized unchecked artifact types", () => {
-    for (const type of ["inventory", "audit", "research", "panel"]) {
+    for (const type of ["inventory", "audit", "research"]) {
       expect(
         UncheckedArtifactSchema.safeParse({
           level: "clean",
@@ -277,7 +277,7 @@ describe("the contract matches the real --json shapes (captured fixtures)", () =
     const parsed = ContractSchema.safeParse(fixture("contract.json"));
     expect(parsed.success).toBe(true);
     if (parsed.success) {
-      expect(parsed.data.version).toBe("0.26.0");
+      expect(parsed.data.version).toBe("0.27.0");
       expect(parsed.data.checks.length).toBeGreaterThan(0);
       for (const check of parsed.data.checks) {
         expect(check.id).toMatch(/^C\d{3}$/);
@@ -311,7 +311,7 @@ describe("the contract matches the real --json shapes (captured fixtures)", () =
         contract.checks[0].severity = "warning";
       },
     ],
-  ])("rejects a %s 0.26.0 checks table", (_case, mutate) => {
+  ])("rejects a %s 0.27.0 checks table", (_case, mutate) => {
     const contract = structuredClone(fixture("contract.json")) as {
       checks: { id: string; name: string; severity: string }[];
     };

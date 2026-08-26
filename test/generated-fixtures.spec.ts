@@ -112,7 +112,7 @@ describe("fixture capture exit assertions", () => {
       2,
       JSON.stringify({ error: "Usage", message: "bad input" }),
     ],
-    ["json", "contract", 0, JSON.stringify({ version: "0.26.0", checks: [] })],
+    ["json", "contract", 0, JSON.stringify({ version: "0.27.0", checks: [] })],
     ["jsonl", "clean", 0, JSON.stringify(report("clean", "clean.md"))],
     [
       "jsonl",

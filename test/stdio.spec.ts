@@ -49,7 +49,7 @@ describe("real stdio transport", () => {
           data: { version: string };
         };
       };
-      expect(checks.structuredContent.data.version).toBe("0.26.0");
+      expect(checks.structuredContent.data.version).toBe("0.27.0");
 
       const check = (await client.callTool({
         name: "suspec_check",
